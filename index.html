@@ -6,25 +6,60 @@
   <title>True Love</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
+    :root {
+      --bg-color: #0d0d12;
+      --card-bg: #181824;
+      --border-color: #2a2a3a;
+      --primary-color: #ff2a6d;
+      --primary-grad: linear-gradient(135deg, #ff2a6d, #ff5e62);
+      --text-color: #ffffff;
+      --subtext-color: #aaa;
+    }
+
+    /* Themes */
+    body.theme-purple {
+      --bg-color: #0f0c1b;
+      --card-bg: #1a1528;
+      --border-color: #31284a;
+      --primary-color: #8a2be2;
+      --primary-grad: linear-gradient(135deg, #8a2be2, #4a00e0);
+    }
+
+    body.theme-ocean {
+      --bg-color: #0a1118;
+      --card-bg: #121d28;
+      --border-color: #203246;
+      --primary-color: #00d2ff;
+      --primary-grad: linear-gradient(135deg, #00d2ff, #3a7bd5);
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background-color: #0d0d12;
-      color: #ffffff;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       display: flex;
       flex-direction: column;
       height: 100vh;
       justify-content: space-between;
+      transition: background 0.3s ease;
     }
     .header {
-      padding: 15px 20px;
+      padding: 12px 15px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #1a1a24;
+      border-bottom: 1px solid var(--border-color);
     }
-    .logo { font-size: 20px; font-weight: bold; color: #ff2a6d; }
+    .logo { font-size: 18px; font-weight: bold; color: var(--primary-color); }
     
+    .controls-top { display: flex; gap: 8px; align-items: center; }
+    .top-btn {
+      background: var(--card-bg); border: 1px solid var(--border-color);
+      color: var(--text-color); padding: 4px 8px; border-radius: 6px;
+      font-size: 12px; cursor: pointer;
+    }
+
     .container {
       flex: 1;
       display: flex;
@@ -40,11 +75,11 @@
       width: 100%;
       max-width: 340px;
       height: 380px;
-      background: #181824;
+      background: var(--card-bg);
       border-radius: 20px;
       position: relative;
       overflow: hidden;
-      border: 1px solid #2a2a3a;
+      border: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
@@ -64,44 +99,44 @@
     }
     .btn:active { transform: scale(0.9); }
     .btn-dislike { background: #252538; color: #ff4757; border: 2px solid #ff4757; }
-    .btn-like { background: linear-gradient(135deg, #ff2a6d, #ff5e62); color: white; }
+    .btn-like { background: var(--primary-grad); color: white; }
 
-    /* Profile Edit Form View */
+    /* Forms */
     .form-container {
       width: 100%; max-width: 340px; display: none; flex-direction: column; gap: 12px;
     }
     .form-group { display: flex; flex-direction: column; gap: 5px; text-align: left; }
-    label { font-size: 13px; color: #aaa; }
+    label { font-size: 13px; color: var(--subtext-color); }
     input, textarea, select {
-      background: #181824; border: 1px solid #2a2a3a; padding: 10px; color: white;
+      background: var(--card-bg); border: 1px solid var(--border-color); padding: 10px; color: var(--text-color);
       border-radius: 8px; font-size: 14px; outline: none;
     }
     .save-btn {
-      background: #ff2a6d; color: white; border: none; padding: 12px;
+      background: var(--primary-grad); color: white; border: none; padding: 12px;
       border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px;
     }
 
-    /* Matches List View */
+    /* Matches */
     .matches-container {
       width: 100%; max-width: 340px; display: none; flex-direction: column; gap: 10px;
     }
     .match-item {
-      display: flex; align-items: center; gap: 12px; background: #181824;
-      padding: 10px; border-radius: 12px; border: 1px solid #2a2a3a;
+      display: flex; align-items: center; gap: 12px; background: var(--card-bg);
+      padding: 10px; border-radius: 12px; border: 1px solid var(--border-color);
     }
     .match-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
     .match-chat-btn {
-      margin-left: auto; background: #ff2a6d; color: white; border: none;
+      margin-left: auto; background: var(--primary-color); color: white; border: none;
       padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
     }
 
-    /* Bottom Navigation Bar */
+    /* Nav Bar */
     .nav-bar {
-      display: flex; justify-content: space-around; background: #12121a;
-      padding: 12px 0; border-top: 1px solid #1a1a24;
+      display: flex; justify-content: space-around; background: var(--card-bg);
+      padding: 12px 0; border-top: 1px solid var(--border-color);
     }
-    .nav-item { color: #666; font-size: 20px; cursor: pointer; text-align: center; }
-    .nav-item.active { color: #ff2a6d; }
+    .nav-item { color: var(--subtext-color); font-size: 20px; cursor: pointer; text-align: center; }
+    .nav-item.active { color: var(--primary-color); }
   </style>
 </head>
 <body>
@@ -109,7 +144,10 @@
   <!-- Header -->
   <div class="header">
     <div class="logo">❤️ True Love</div>
-    <div id="user-display" style="font-size: 13px; color: #888;"></div>
+    <div class="controls-top">
+      <button class="top-btn" onclick="toggleLanguage()" id="lang-btn">🇪🇹 AM</button>
+      <button class="top-btn" onclick="toggleTheme()">🎨 Theme</button>
+    </div>
   </div>
 
   <!-- Main Content Container -->
@@ -121,8 +159,8 @@
         <img id="profile-img" class="card-img" src="" alt="Profile">
         <div class="card-info">
           <div style="font-size: 22px; font-weight: bold;" id="card-name"></div>
-          <div style="font-size: 13px; color: #ff2a6d; margin-top: 2px;" id="card-religion-zodiac"></div>
-          <div style="font-size: 13px; color: #ccc; margin-top: 4px;" id="card-bio"></div>
+          <div style="font-size: 13px; color: var(--primary-color); margin-top: 2px;" id="card-religion-zodiac"></div>
+          <div style="font-size: 13px; color: var(--subtext-color); margin-top: 4px;" id="card-bio"></div>
         </div>
       </div>
       <div class="actions">
@@ -133,25 +171,23 @@
 
     <!-- 2. MATCHES & CHAT VIEW -->
     <div id="matches-view" class="matches-container">
-      <h3 style="margin-bottom: 10px;">የተወደዱ ፕሮፋይሎች (Matches)</h3>
-      <div id="matches-list">
-        <!-- Matches will be dynamically loaded here -->
-      </div>
+      <h3 style="margin-bottom: 10px;" id="txt-matches-title">የተወደዱ ፕሮፋይሎች (Matches)</h3>
+      <div id="matches-list"></div>
     </div>
 
     <!-- 3. MY PROFILE EDIT VIEW -->
     <div id="profile-view" class="form-container">
-      <h3 style="margin-bottom: 10px;">ፕሮፋይል አስተካክል</h3>
+      <h3 style="margin-bottom: 10px;" id="txt-edit-title">ፕሮፋይል አስተካክል</h3>
       <div class="form-group">
-        <label>ስም</label>
+        <label id="lbl-name">ስም</label>
         <input type="text" id="my-input-name" placeholder="ስምህን አስገባ">
       </div>
       <div class="form-group">
-        <label>ዕድሜ</label>
+        <label id="lbl-age">ዕድሜ</label>
         <input type="number" id="my-input-age" placeholder="22">
       </div>
       <div class="form-group">
-        <label>ሃይማኖት</label>
+        <label id="lbl-religion">ሃይማኖት</label>
         <select id="my-input-religion">
           <option value="ኦርቶዶክስ">ኦርቶዶክስ</option>
           <option value="ሙስሊም">ሙስሊም</option>
@@ -160,10 +196,10 @@
         </select>
       </div>
       <div class="form-group">
-        <label>ስለ እኔ (Bio)</label>
+        <label id="lbl-bio">ስለ እኔ (Bio)</label>
         <textarea id="my-input-bio" rows="3" placeholder="ስለራስህ በጥቂቱ..."></textarea>
       </div>
-      <button class="save-btn" onclick="saveMyProfile()">ሴቭ አድርግ</button>
+      <button class="save-btn" id="btn-save" onclick="saveMyProfile()">ሴቭ አድርግ</button>
     </div>
 
   </div>
@@ -179,11 +215,35 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    // Telegram User Info
-    const tgUser = tg.initDataUnsafe?.user;
-    if (tgUser) {
-      document.getElementById('user-display').innerText = tgUser.first_name;
-    }
+    // Translations
+    const translations = {
+      am: {
+        matchesTitle: "የተወደዱ ፕሮፋይሎች (Matches)",
+        editTitle: "ፕሮፋይል አስተካክል",
+        lblName: "ስም",
+        lblAge: "ዕድሜ",
+        lblReligion: "ሃይማኖት",
+        lblBio: "ስለ እኔ (Bio)",
+        btnSave: "ሴቭ አድርግ",
+        noMatches: "እስካሁን ምንም የተወደደ ፕሮፋይል የለም",
+        matchAlert: "ከ {name} ጋር ተወዳዳችኋል! 🎉\nመልእክት ለመላክ የ 💬 ምልክቷን ይጫኑ።"
+      },
+      en: {
+        matchesTitle: "Your Matches",
+        editTitle: "Edit Profile",
+        lblName: "Name",
+        lblAge: "Age",
+        lblReligion: "Religion",
+        lblBio: "About Me (Bio)",
+        btnSave: "Save Profile",
+        noMatches: "No matches found yet",
+        matchAlert: "You matched with {name}! 🎉\nClick 💬 to chat."
+      }
+    };
+
+    let currentLang = localStorage.getItem('app_lang') || 'am';
+    let themes = ['', 'theme-purple', 'theme-ocean'];
+    let currentThemeIdx = parseInt(localStorage.getItem('app_theme_idx') || '0');
 
     // Dummy Profiles List
     const profiles = [
@@ -194,6 +254,35 @@
 
     let currentIndex = 0;
     let myMatches = [];
+
+    function applyLanguage() {
+      const t = translations[currentLang];
+      document.getElementById('lang-btn').innerText = currentLang === 'am' ? "🇪🇹 AM" : "🇬🇧 EN";
+      document.getElementById('txt-matches-title').innerText = t.matchesTitle;
+      document.getElementById('txt-edit-title').innerText = t.editTitle;
+      document.getElementById('lbl-name').innerText = t.lblName;
+      document.getElementById('lbl-age').innerText = t.lblAge;
+      document.getElementById('lbl-religion').innerText = t.lblReligion;
+      document.getElementById('lbl-bio').innerText = t.lblBio;
+      document.getElementById('btn-save').innerText = t.btnSave;
+      renderMatches();
+    }
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'am' ? 'en' : 'am';
+      localStorage.setItem('app_lang', currentLang);
+      applyLanguage();
+    }
+
+    function applyTheme() {
+      document.body.className = themes[currentThemeIdx];
+    }
+
+    function toggleTheme() {
+      currentThemeIdx = (currentThemeIdx + 1) % themes.length;
+      localStorage.setItem('app_theme_idx', currentThemeIdx);
+      applyTheme();
+    }
 
     function renderProfile() {
       const p = profiles[currentIndex];
@@ -208,13 +297,13 @@
         tg.HapticFeedback?.impactOccurred('medium');
         const likedProfile = profiles[currentIndex];
         
-        // Save match
         if (!myMatches.some(m => m.id === likedProfile.id)) {
           myMatches.push(likedProfile);
           renderMatches();
         }
         
-        tg.showAlert(`ከ ${likedProfile.name} ጋር ተወዳዳችኋል! 🎉\nመልእክት ለመላክ የ 💬 ምልክቷን ይጫኑ።`);
+        const msg = translations[currentLang].matchAlert.replace('{name}', likedProfile.name);
+        tg.showAlert(msg);
       }
       currentIndex = (currentIndex + 1) % profiles.length;
       renderProfile();
@@ -222,8 +311,10 @@
 
     function renderMatches() {
       const listContainer = document.getElementById('matches-list');
+      const t = translations[currentLang];
+      
       if (myMatches.length === 0) {
-        listContainer.innerHTML = '<p style="color:#777; font-size:13px; text-align:center; margin-top:20px;">እስካሁን ምንም የተወደደ ፕሮፋይል የለም</p>';
+        listContainer.innerHTML = `<p style="color:var(--subtext-color); font-size:13px; text-align:center; margin-top:20px;">${t.noMatches}</p>`;
         return;
       }
 
@@ -235,7 +326,7 @@
           <img src="${m.img}" class="match-img" alt="user">
           <div>
             <div style="font-weight:bold; font-size:14px;">${m.name}</div>
-            <div style="font-size:11px; color:#aaa;">${m.religion}</div>
+            <div style="font-size:11px; color:var(--subtext-color);">${m.religion}</div>
           </div>
           <button class="match-chat-btn" onclick="openChat('${m.username}')">Chat 💬</button>
         `;
@@ -246,12 +337,9 @@
     function openChat(username) {
       if (username) {
         tg.openTelegramLink(`https://t.me/${username}`);
-      } else {
-        tg.showAlert("የዚህ ተጠቃሚ Username አልተገኘም!");
       }
     }
 
-    // Navigation Switcher
     function switchTab(tab) {
       const swipeView = document.getElementById('swipe-view');
       const matchesView = document.getElementById('matches-view');
@@ -281,7 +369,6 @@
       }
     }
 
-    // Save Profile to LocalStorage
     function saveMyProfile() {
       const name = document.getElementById('my-input-name').value;
       const age = document.getElementById('my-input-age').value;
@@ -289,16 +376,15 @@
       const bio = document.getElementById('my-input-bio').value;
 
       if (!name || !age) {
-        tg.showAlert("እባክዎን ስም እና ዕድሜ ያስገቡ!");
+        tg.showAlert("Please fill name and age!");
         return;
       }
 
       localStorage.setItem('user_profile', JSON.stringify({ name, age, religion, bio }));
-      tg.showAlert("ፕሮፋይልህ በትክክል ተመዝግቧል! 🎉");
+      tg.showAlert("Saved! 🎉");
       switchTab('home');
     }
 
-    // Load Profile if exists
     function loadMyProfile() {
       const saved = localStorage.getItem('user_profile');
       if (saved) {
@@ -307,14 +393,13 @@
         document.getElementById('my-input-age').value = data.age || '';
         document.getElementById('my-input-religion').value = data.religion || 'ኦርቶዶክስ';
         document.getElementById('my-input-bio').value = data.bio || '';
-      } else if (tgUser) {
-        document.getElementById('my-input-name').value = tgUser.first_name || '';
       }
     }
 
-    // Initialize App
+    // Init
+    applyLanguage();
+    applyTheme();
     renderProfile();
-    renderMatches();
     loadMyProfile();
   </script>
 </body>
