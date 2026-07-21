@@ -60,7 +60,9 @@
     .btn {
       width: 60px; height: 60px; border-radius: 50%; border: none; font-size: 24px;
       display: flex; align-items: center; justify-content: center; cursor: pointer;
+      transition: transform 0.2s;
     }
+    .btn:active { transform: scale(0.9); }
     .btn-dislike { background: #252538; color: #ff4757; border: 2px solid #ff4757; }
     .btn-like { background: linear-gradient(135deg, #ff2a6d, #ff5e62); color: white; }
 
@@ -70,7 +72,7 @@
     }
     .form-group { display: flex; flex-direction: column; gap: 5px; text-align: left; }
     label { font-size: 13px; color: #aaa; }
-    input, textarea {
+    input, textarea, select {
       background: #181824; border: 1px solid #2a2a3a; padding: 10px; color: white;
       border-radius: 8px; font-size: 14px; outline: none;
     }
@@ -79,18 +81,18 @@
       border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px;
     }
 
-    /* Matches List */
+    /* Matches List View */
     .matches-container {
       width: 100%; max-width: 340px; display: none; flex-direction: column; gap: 10px;
     }
     .match-item {
-      display: flex; align-items: center; justify-content: space-between;
-      background: #181824; padding: 10px 15px; border-radius: 12px; border: 1px solid #2a2a3a;
+      display: flex; align-items: center; gap: 12px; background: #181824;
+      padding: 10px; border-radius: 12px; border: 1px solid #2a2a3a;
     }
-    .match-avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
-    .chat-btn {
-      background: #0088cc; color: white; border: none; padding: 6px 12px;
-      border-radius: 6px; font-size: 12px; cursor: pointer; text-decoration: none;
+    .match-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+    .match-chat-btn {
+      margin-left: auto; background: #ff2a6d; color: white; border: none;
+      padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
     }
 
     /* Bottom Navigation Bar */
@@ -119,6 +121,7 @@
         <img id="profile-img" class="card-img" src="" alt="Profile">
         <div class="card-info">
           <div style="font-size: 22px; font-weight: bold;" id="card-name"></div>
+          <div style="font-size: 13px; color: #ff2a6d; margin-top: 2px;" id="card-religion-zodiac"></div>
           <div style="font-size: 13px; color: #ccc; margin-top: 4px;" id="card-bio"></div>
         </div>
       </div>
@@ -128,11 +131,11 @@
       </div>
     </div>
 
-    <!-- 2. MATCHES VIEW -->
+    <!-- 2. MATCHES & CHAT VIEW -->
     <div id="matches-view" class="matches-container">
-      <h3 style="margin-bottom: 10px;">የእርስዎ Matches ❤️</h3>
-      <div id="matches-list" style="display: flex; flex-direction: column; gap: 10px;">
-        <p style="color: #666; font-size: 13px;">እስካሁን ምንም Match የለም። ሰዎችን Like ያድርጉ!</p>
+      <h3 style="margin-bottom: 10px;">የተወደዱ ፕሮፋይሎች (Matches)</h3>
+      <div id="matches-list">
+        <!-- Matches will be dynamically loaded here -->
       </div>
     </div>
 
@@ -146,6 +149,15 @@
       <div class="form-group">
         <label>ዕድሜ</label>
         <input type="number" id="my-input-age" placeholder="22">
+      </div>
+      <div class="form-group">
+        <label>ሃይማኖት</label>
+        <select id="my-input-religion">
+          <option value="ኦርቶዶክስ">ኦርቶዶክስ</option>
+          <option value="ሙስሊም">ሙስሊም</option>
+          <option value="ፕሮቴስታንት">ፕሮቴስታንት</option>
+          <option value="ሌላ">ሌላ</option>
+        </select>
       </div>
       <div class="form-group">
         <label>ስለ እኔ (Bio)</label>
@@ -167,15 +179,17 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
+    // Telegram User Info
     const tgUser = tg.initDataUnsafe?.user;
     if (tgUser) {
       document.getElementById('user-display').innerText = tgUser.first_name;
     }
 
+    // Dummy Profiles List
     const profiles = [
-      { id: 1, name: "ሀና፣ 22", bio: "አዲስ ሰዎችን ማወቅ እና ካፌዎችን መጎብኘት እወዳለሁ ☕✨", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", username: "telegram" },
-      { id: 2, name: "ዮናስ፣ 25", bio: "የቴክኖሎጂ እና የሙዚቃ አፍቃሪ 🎧💻", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", username: "telegram" },
-      { id: 3, name: "ሰላም፣ 21", bio: "መጽሐፍ ማንበብ እና ጉዞ ደስታዬ ነው 📚✈️", img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500", username: "telegram" }
+      { id: 1, name: "ሀና፣ 22", bio: "አዲስ ሰዎችን ማወቅ እና ካፌዎችን መጎብኘት እወዳለሁ ☕✨", religion: "ኦርቶዶክስ", zodiac: "Aries", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", username: "telegram" },
+      { id: 2, name: "ዮናስ፣ 25", bio: "የቴክኖሎጂ እና የሙዚቃ አፍቃሪ 🎧💻", religion: "ፕሮቴስታንት", zodiac: "Leo", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", username: "telegram" },
+      { id: 3, name: "ሰላም፣ 21", bio: "መጽሐፍ ማንበብ እና ጉዞ ደስታዬ ነው 📚✈️", religion: "ሙስሊም", zodiac: "Virgo", img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500", username: "telegram" }
     ];
 
     let currentIndex = 0;
@@ -185,60 +199,93 @@
       const p = profiles[currentIndex];
       document.getElementById('profile-img').src = p.img;
       document.getElementById('card-name').innerText = p.name;
+      document.getElementById('card-religion-zodiac').innerText = `☦️ ${p.religion} | 🌟 ${p.zodiac}`;
       document.getElementById('card-bio').innerText = p.bio;
     }
 
     function nextProfile(action) {
       if (action === 'like') {
         tg.HapticFeedback?.impactOccurred('medium');
-        const currentPerson = profiles[currentIndex];
+        const likedProfile = profiles[currentIndex];
         
-        // Add to matches if not already added
-        if (!myMatches.some(m => m.id === currentPerson.id)) {
-          myMatches.push(currentPerson);
-          updateMatchesUI();
-          tg.showAlert(`🎉 It's a Match! ከ ${currentPerson.name.split('፣')[0]} ጋር ተጣመዳችኋል!`);
+        // Save match
+        if (!myMatches.some(m => m.id === likedProfile.id)) {
+          myMatches.push(likedProfile);
+          renderMatches();
         }
+        
+        tg.showAlert(`ከ ${likedProfile.name} ጋር ተወዳዳችኋል! 🎉\nመልእክት ለመላክ የ 💬 ምልክቷን ይጫኑ።`);
       }
       currentIndex = (currentIndex + 1) % profiles.length;
       renderProfile();
     }
 
-    function updateMatchesUI() {
-      const listEl = document.getElementById('matches-list');
-      if (myMatches.length === 0) return;
+    function renderMatches() {
+      const listContainer = document.getElementById('matches-list');
+      if (myMatches.length === 0) {
+        listContainer.innerHTML = '<p style="color:#777; font-size:13px; text-align:center; margin-top:20px;">እስካሁን ምንም የተወደደ ፕሮፋይል የለም</p>';
+        return;
+      }
 
-      listEl.innerHTML = myMatches.map(m => `
-        <div class="match-item">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <img class="match-avatar" src="${m.img}">
-            <div>
-              <div style="font-size:14px; font-weight:bold;">${m.name}</div>
-              <div style="font-size:11px; color:#aaa;">Match ሆናችኋል!</div>
-            </div>
+      listContainer.innerHTML = '';
+      myMatches.forEach(m => {
+        const item = document.createElement('div');
+        item.className = 'match-item';
+        item.innerHTML = `
+          <img src="${m.img}" class="match-img" alt="user">
+          <div>
+            <div style="font-weight:bold; font-size:14px;">${m.name}</div>
+            <div style="font-size:11px; color:#aaa;">${m.religion}</div>
           </div>
-          <button class="chat-btn" onclick="openChat('${m.username}')">Chat 💬</button>
-        </div>
-      `).join('');
+          <button class="match-chat-btn" onclick="openChat('${m.username}')">Chat 💬</button>
+        `;
+        listContainer.appendChild(item);
+      });
     }
 
     function openChat(username) {
-      tg.openTelegramLink(`https://t.me/${username}`);
+      if (username) {
+        tg.openTelegramLink(`https://t.me/${username}`);
+      } else {
+        tg.showAlert("የዚህ ተጠቃሚ Username አልተገኘም!");
+      }
     }
 
+    // Navigation Switcher
     function switchTab(tab) {
-      document.getElementById('swipe-view').style.display = tab === 'home' ? 'flex' : 'none';
-      document.getElementById('matches-view').style.display = tab === 'matches' ? 'flex' : 'none';
-      document.getElementById('profile-view').style.display = tab === 'profile' ? 'flex' : 'none';
+      const swipeView = document.getElementById('swipe-view');
+      const matchesView = document.getElementById('matches-view');
+      const profileView = document.getElementById('profile-view');
+      
+      const navHome = document.getElementById('nav-home');
+      const navMatches = document.getElementById('nav-matches');
+      const navProfile = document.getElementById('nav-profile');
 
-      document.getElementById('nav-home').classList.toggle('active', tab === 'home');
-      document.getElementById('nav-matches').classList.toggle('active', tab === 'matches');
-      document.getElementById('profile-view').classList.toggle('active', tab === 'profile');
+      swipeView.style.display = 'none';
+      matchesView.style.display = 'none';
+      profileView.style.display = 'none';
+
+      navHome.classList.remove('active');
+      navMatches.classList.remove('active');
+      navProfile.classList.remove('active');
+
+      if (tab === 'home') {
+        swipeView.style.display = 'flex';
+        navHome.classList.add('active');
+      } else if (tab === 'matches') {
+        matchesView.style.display = 'flex';
+        navMatches.classList.add('active');
+      } else if (tab === 'profile') {
+        profileView.style.display = 'flex';
+        navProfile.classList.add('active');
+      }
     }
 
+    // Save Profile to LocalStorage
     function saveMyProfile() {
       const name = document.getElementById('my-input-name').value;
       const age = document.getElementById('my-input-age').value;
+      const religion = document.getElementById('my-input-religion').value;
       const bio = document.getElementById('my-input-bio').value;
 
       if (!name || !age) {
@@ -246,24 +293,28 @@
         return;
       }
 
-      localStorage.setItem('user_profile', JSON.stringify({ name, age, bio }));
+      localStorage.setItem('user_profile', JSON.stringify({ name, age, religion, bio }));
       tg.showAlert("ፕሮፋይልህ በትክክል ተመዝግቧል! 🎉");
       switchTab('home');
     }
 
+    // Load Profile if exists
     function loadMyProfile() {
       const saved = localStorage.getItem('user_profile');
       if (saved) {
         const data = JSON.parse(saved);
         document.getElementById('my-input-name').value = data.name || '';
         document.getElementById('my-input-age').value = data.age || '';
+        document.getElementById('my-input-religion').value = data.religion || 'ኦርቶዶክስ';
         document.getElementById('my-input-bio').value = data.bio || '';
       } else if (tgUser) {
         document.getElementById('my-input-name').value = tgUser.first_name || '';
       }
     }
 
+    // Initialize App
     renderProfile();
+    renderMatches();
     loadMyProfile();
   </script>
 </body>
