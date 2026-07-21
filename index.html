@@ -6,30 +6,32 @@
   <title>True Love</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    /* Default Dark Mode (Pink Accent) */
     :root {
-      --bg-color: #0d0d12;
-      --card-bg: #181824;
-      --border-color: #2a2a3a;
+      --bg-color: #050b18;
+      --card-bg: #0d1b34;
+      --border-color: #1a2c4e;
+      --primary-color: #2575fc;
+      --primary-grad: linear-gradient(135deg, #0052d4, #4364f7, #6fb1fc);
+      --text-color: #ffffff;
+      --subtext-color: #8da4c4;
+      --input-bg: #091326;
+      --accent-green: #38ef7d;
+      --accent-gold: #ffb703;
+      --accent-red: #ff3b5c;
+    }
+
+    body.light-mode {
+      --bg-color: #f0f4f9;
+      --card-bg: #ffffff;
+      --border-color: #d1dbe8;
+      --text-color: #0a192f;
+      --subtext-color: #5a6e85;
+      --input-bg: #f8fafc;
+    }
+
+    body.theme-pink {
       --primary-color: #ff2a6d;
       --primary-grad: linear-gradient(135deg, #ff2a6d, #ff5e62);
-      --text-color: #ffffff;
-      --subtext-color: #aaa;
-    }
-
-    /* Light Mode */
-    body.light-mode {
-      --bg-color: #f4f5f9;
-      --card-bg: #ffffff;
-      --border-color: #e0e0e0;
-      --text-color: #1a1a24;
-      --subtext-color: #666666;
-    }
-
-    /* Color Themes (Dark) */
-    body.theme-purple {
-      --primary-color: #9d4edd;
-      --primary-grad: linear-gradient(135deg, #7b2cbf, #9d4edd);
     }
     body.theme-ocean {
       --primary-color: #00b4d8;
@@ -37,16 +39,19 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
+    
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
       background-color: var(--bg-color);
       color: var(--text-color);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      justify-content: space-between;
-      transition: background 0.3s ease, color 0.3s ease;
     }
+
+    body { display: flex; flex-direction: column; }
+
+    /* Header */
     .header {
       padding: 12px 15px;
       display: flex;
@@ -54,14 +59,21 @@
       align-items: center;
       border-bottom: 1px solid var(--border-color);
       background: var(--card-bg);
+      z-index: 10;
+      flex-shrink: 0;
     }
-    .logo { font-size: 18px; font-weight: bold; color: var(--primary-color); }
-    
+    .logo { font-size: 18px; font-weight: 800; color: var(--text-color); letter-spacing: 0.5px; }
+    .logo span { color: #4364f7; }
     .controls-top { display: flex; gap: 6px; align-items: center; }
     .top-btn {
-      background: var(--bg-color); border: 1px solid var(--border-color);
+      background: var(--input-bg); border: 1px solid var(--border-color);
       color: var(--text-color); padding: 5px 9px; border-radius: 8px;
       font-size: 12px; cursor: pointer; font-weight: 500;
+    }
+
+    .vip-badge {
+      background: linear-gradient(135deg, #ffb703, #fb8500);
+      color: #000; font-weight: bold; padding: 3px 8px; border-radius: 12px; font-size: 10px;
     }
 
     .container {
@@ -69,201 +81,733 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       padding: 15px;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
-    /* Swipe View */
+    /* Swipe Card View */
     .profile-card {
       width: 100%;
-      max-width: 340px;
-      height: 380px;
+      max-width: 330px;
+      height: 430px;
       background: var(--card-bg);
-      border-radius: 20px;
+      border-radius: 24px;
       position: relative;
       overflow: hidden;
       border: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      flex-shrink: 0;
     }
-    .card-img {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+
+    .card-img-container {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: #091326; display: flex; align-items: center; justify-content: center;
     }
+    .card-img { width: 100%; height: 100%; object-fit: cover; }
+
     .card-info {
-      position: relative; z-index: 2; padding: 20px;
-      background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
-      color: #ffffff;
+      position: relative; z-index: 2; padding: 20px 18px;
+      background: linear-gradient(to top, rgba(5, 11, 24, 0.95) 50%, rgba(5, 11, 24, 0.4) 85%, transparent);
+      color: #ffffff; text-align: left;
     }
-    .actions { display: flex; gap: 20px; margin-top: 15px; }
+
+    .limit-counter {
+      font-size: 12px; color: var(--subtext-color); margin-top: 10px;
+      background: var(--input-bg); padding: 5px 12px; border-radius: 10px; border: 1px solid var(--border-color);
+    }
+
+    .actions { display: flex; gap: 25px; margin-top: 15px; margin-bottom: 20px; flex-shrink: 0; }
     .btn {
-      width: 60px; height: 60px; border-radius: 50%; border: none; font-size: 24px;
-      display: flex; align-items: center; justify-content: center; cursor: pointer;
-      transition: transform 0.2s;
+      width: 60px; height: 60px; border-radius: 50%; border: none; font-size: 22px;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s;
     }
     .btn:active { transform: scale(0.9); }
     .btn-dislike { background: var(--card-bg); color: #ff4757; border: 2px solid #ff4757; }
-    .btn-like { background: var(--primary-grad); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .btn-like { background: var(--primary-grad); color: white; box-shadow: 0 4px 20px rgba(67, 100, 247, 0.5); }
 
-    /* Forms */
+    /* Form Container */
     .form-container {
-      width: 100%; max-width: 340px; display: none; flex-direction: column; gap: 12px;
-    }
-    .form-group { display: flex; flex-direction: column; gap: 5px; text-align: left; }
-    label { font-size: 13px; color: var(--subtext-color); }
-    input, textarea, select {
-      background: var(--card-bg); border: 1px solid var(--border-color); padding: 10px; color: var(--text-color);
-      border-radius: 8px; font-size: 14px; outline: none;
-    }
-    .save-btn {
-      background: var(--primary-grad); color: white; border: none; padding: 12px;
-      border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px;
+      width: 100%; max-width: 330px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 120px;
     }
 
-    /* Matches */
-    .matches-container {
-      width: 100%; max-width: 340px; display: none; flex-direction: column; gap: 10px;
+    .form-section-title {
+      font-size: 13px; font-weight: bold; color: #4364f7;
+      margin-top: 8px; border-bottom: 1px dashed var(--border-color); padding-bottom: 4px;
     }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; text-align: left; }
+    label { font-size: 13px; color: var(--subtext-color); font-weight: 500; }
+    input, textarea, select {
+      background: var(--input-bg); border: 1px solid var(--border-color); padding: 12px; color: var(--text-color);
+      border-radius: 12px; font-size: 14px; outline: none;
+    }
+    input:focus, textarea:focus, select:focus { border-color: #4364f7; }
+
+    .action-input-btn {
+      background: var(--input-bg); border: 1px solid var(--border-color);
+      color: #6fb1fc; padding: 11px; border-radius: 12px;
+      font-size: 13px; font-weight: 600; cursor: pointer; text-align: center;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .action-input-btn:active { background: var(--border-color); }
+
+    .file-upload-wrapper {
+      display: flex; flex-direction: column; gap: 8px; align-items: center;
+      background: var(--input-bg); border: 2px dashed var(--border-color); padding: 16px;
+      border-radius: 14px; cursor: pointer; text-align: center;
+    }
+    .preview-img {
+      width: 70px; height: 70px; border-radius: 50%; object-fit: cover; display: none;
+      border: 2px solid #4364f7;
+    }
+
+    .save-btn {
+      background: var(--primary-grad); color: white; border: none; padding: 14px;
+      border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px;
+      box-shadow: 0 4px 15px rgba(67, 100, 247, 0.3);
+    }
+
+    .matches-container { width: 100%; max-width: 330px; display: none; flex-direction: column; gap: 10px; padding-bottom: 100px; }
     .match-item {
       display: flex; align-items: center; gap: 12px; background: var(--card-bg);
-      padding: 10px; border-radius: 12px; border: 1px solid var(--border-color);
+      padding: 12px; border-radius: 14px; border: 1px solid var(--border-color);
     }
     .match-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
     .match-chat-btn {
-      margin-left: auto; background: var(--primary-color); color: white; border: none;
-      padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
+      margin-left: auto; background: var(--primary-grad); color: white; border: none;
+      padding: 7px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: bold;
     }
 
-    /* Nav Bar */
     .nav-bar {
       display: flex; justify-content: space-around; background: var(--card-bg);
-      padding: 12px 0; border-top: 1px solid var(--border-color);
+      padding: 14px 0; border-top: 1px solid var(--border-color); z-index: 10; flex-shrink: 0;
     }
-    .nav-item { color: var(--subtext-color); font-size: 20px; cursor: pointer; text-align: center; }
-    .nav-item.active { color: var(--primary-color); }
+    .nav-item { color: var(--subtext-color); font-size: 20px; cursor: pointer; }
+    .nav-item.active { color: #6fb1fc; }
+
+    /* ==================== VIP MODAL STYLES ==================== */
+    .vip-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(5px);
+      z-index: 100;
+      display: none;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    .vip-modal-content {
+      width: 100%;
+      max-width: 420px;
+      max-height: 90vh;
+      background: var(--bg-color);
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      border: 1px solid var(--border-color);
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .close-modal-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px; font-weight: bold;
+    }
+
+    .pkg-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .pkg-card.selected {
+      border: 2px solid var(--accent-red);
+    }
+
+    .pkg-info h4 { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+    .pkg-info p { font-size: 12px; color: var(--subtext-color); }
+    .pkg-price { font-size: 18px; font-weight: 800; color: var(--accent-red); }
+
+    .payment-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .account-box {
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .upload-btn {
+      background: var(--input-bg);
+      border: 1px dashed var(--subtext-color);
+      color: var(--text-color);
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .submit-btn {
+      background: var(--accent-red);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .preview-ss {
+      max-height: 100px;
+      object-fit: contain;
+      border-radius: 8px;
+      display: none;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
+  <!-- App Header -->
   <div class="header">
-    <div class="logo">❤️ True Love</div>
+    <div class="logo">TRUE <span>LOVE</span> <span id="user-status-tag" class="vip-badge" style="display:none;">👑 VIP</span></div>
     <div class="controls-top">
       <button class="top-btn" onclick="toggleMode()" id="mode-btn">🌙 Dark</button>
       <button class="top-btn" onclick="toggleLanguage()" id="lang-btn">🇪🇹 AM</button>
       <button class="top-btn" onclick="toggleTheme()">🎨 Color</button>
+      <button class="top-btn" style="background: linear-gradient(135deg, #ffb703, #fb8500); color:#000; font-weight:bold;" onclick="openVIPModal()">👑 VIP</button>
     </div>
   </div>
 
-  <!-- Main Content Container -->
+  <!-- App Container -->
   <div class="container">
     
-    <!-- 1. SWIPE HOME VIEW -->
-    <div id="swipe-view" style="display: flex; flex-direction: column; align-items: center;">
+    <!-- 1. SWIPE VIEW -->
+    <div id="swipe-view" style="display: none; flex-direction: column; align-items: center;">
       <div class="profile-card">
-        <img id="profile-img" class="card-img" src="" alt="Profile">
+        <div class="card-img-container">
+          <img id="profile-img" class="card-img" src="" alt="Profile" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png';">
+                  </div>
         <div class="card-info">
-          <div style="font-size: 22px; font-weight: bold;" id="card-name"></div>
-          <div style="font-size: 13px; color: #ff2a6d; margin-top: 2px;" id="card-religion-zodiac"></div>
-          <div style="font-size: 13px; color: #ddd; margin-top: 4px;" id="card-bio"></div>
+          <div style="font-size: 22px; font-weight: bold;" id="card-name">...</div>
+          <div style="font-size: 13px; color: #6fb1fc; margin-top: 3px;" id="card-religion-zodiac">...</div>
+          <div style="font-size: 13px; color: #cbd5e1; margin-top: 5px; line-height: 1.3;" id="card-bio">...</div>
         </div>
       </div>
+      
+      <!-- Counter Tag -->
+      <div id="view-counter-tag" class="limit-counter">የዛሬ ያዩት፡ 0/25 ፕሮፋይል</div>
+
       <div class="actions">
         <button class="btn btn-dislike" onclick="nextProfile('pass')">✖</button>
         <button class="btn btn-like" onclick="nextProfile('like')">❤️</button>
       </div>
     </div>
 
-    <!-- 2. MATCHES & CHAT VIEW -->
+    <!-- 2. MATCHES VIEW -->
     <div id="matches-view" class="matches-container">
-      <h3 style="margin-bottom: 10px;" id="txt-matches-title">የተወደዱ ፕሮፋይሎች (Matches)</h3>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+        <h3 id="txt-matches-title">Matches</h3>
+        <span id="chat-counter-tag" class="limit-counter">የዛሬ ቻት፡ 0/10</span>
+      </div>
       <div id="matches-list"></div>
     </div>
 
-    <!-- 3. MY PROFILE EDIT VIEW -->
+    <!-- 3. PROFILE REGISTER/EDIT VIEW -->
     <div id="profile-view" class="form-container">
-      <h3 style="margin-bottom: 10px;" id="txt-edit-title">ፕሮፋይል አስተካክል</h3>
+      <h3 style="margin-bottom: 5px;" id="txt-edit-title">Register First</h3>
+      
+      <!-- User Info -->
       <div class="form-group">
-        <label id="lbl-name">ስም</label>
-        <input type="text" id="my-input-name" placeholder="ስምህን አስገባ">
+        <label id="lbl-name">Name</label>
+        <input type="text" id="my-input-name" placeholder="Name">
       </div>
+
       <div class="form-group">
-        <label id="lbl-age">ዕድሜ</label>
-        <input type="number" id="my-input-age" placeholder="22">
+        <label id="lbl-age">Age</label>
+        <input type="number" id="my-input-age" placeholder="18">
       </div>
+
       <div class="form-group">
-        <label id="lbl-religion">ሃይማኖት</label>
-        <select id="my-input-religion">
-          <option value="ኦርቶዶክስ">ኦርቶዶክስ</option>
-          <option value="ሙስሊም">ሙስሊም</option>
-          <option value="ፕሮቴስታንት">ፕሮቴስታንት</option>
-          <option value="ሌላ">ሌላ</option>
+        <label id="lbl-gender">Gender</label>
+        <select id="my-input-gender">
+          <option value="Female" id="opt-female">Female</option>
+          <option value="Male" id="opt-male">Male</option>
         </select>
       </div>
+
+      <!-- Contact & Location -->
+      <div class="form-section-title" id="txt-contact-loc-title">📍 Location & Contact</div>
+
       <div class="form-group">
-        <label id="lbl-bio">ስለ እኔ (Bio)</label>
-        <textarea id="my-input-bio" rows="3" placeholder="ስለራስህ በጥቂቱ..."></textarea>
+        <label id="lbl-phone">Phone Number</label>
+        <input type="text" id="my-input-phone" placeholder="+251912345678">
+        <button type="button" class="action-input-btn" id="btn-share-phone" onclick="requestTelegramContact()">
+          📱 Share Telegram Phone Number
+        </button>
       </div>
-      <button class="save-btn" id="btn-save" onclick="saveMyProfile()">ሴቭ አድርግ</button>
+
+      <div class="form-group">
+        <label id="lbl-location">Location</label>
+        <input type="text" id="my-input-location" placeholder="Addis Ababa, Ethiopia">
+        <button type="button" class="action-input-btn" id="btn-gps-location" onclick="requestGPSLocation()">
+          📍 Get Live GPS Location
+        </button>
+      </div>
+
+      <!-- Preferences -->
+      <div class="form-section-title" id="txt-pref-title">🎯 Preferences</div>
+
+      <div class="form-group">
+        <label id="lbl-looking-for">I am looking for</label>
+        <select id="my-pref-looking">
+          <option value="Male" id="opt-look-male">Male</option>
+          <option value="Female" id="opt-look-female">Female</option>
+          <option value="Both" id="opt-look-both">Both</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label id="lbl-pref-age">Preferred Age Range</label>
+        <select id="my-pref-age">
+          <option value="18-25">18 - 25</option>
+          <option value="26-35">26 - 35</option>
+          <option value="36+">36+</option>
+          <option value="Any" id="opt-age-any">Any Age</option>
+        </select>
+      </div>
+
+      <!-- Religion -->
+      <div class="form-group">
+        <label id="lbl-religion">Religion</label>
+        <select id="my-input-religion" onchange="toggleManualReligionInput()">
+          <option value="Orthodox" id="opt-rel-orthodox">Orthodox</option>
+          <option value="Protestant" id="opt-rel-protestant">Protestant</option>
+          <option value="Muslim" id="opt-rel-muslim">Muslim</option>
+          <option value="Catholic" id="opt-rel-catholic">Catholic</option>
+          <option value="MANUAL" id="opt-rel-manual">✍️ Type manually</option>
+        </select>
+        <input type="text" id="my-input-religion-manual" placeholder="Type your religion..." style="display: none; margin-top: 5px;">
+      </div>
+
+      <!-- Photo -->
+      <div class="form-group">
+        <label id="lbl-photo">Choose Photo</label>
+        <div class="file-upload-wrapper" onclick="document.getElementById('my-file-input').click()">
+          <img id="my-photo-preview" class="preview-img" alt="Preview">
+          <span id="txt-file-status" style="font-size: 13px; color: var(--subtext-color);">📷 Select Photo</span>
+        </div>
+        <input type="file" id="my-file-input" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+      </div>
+
+      <!-- Bio -->
+      <div class="form-group">
+        <label id="lbl-bio">About Me (Bio)</label>
+        <textarea id="my-input-bio" rows="3" placeholder="Tell something about yourself..."></textarea>
+      </div>
+
+      <button class="save-btn" id="btn-save" onclick="saveMyProfile()">Save Profile</button>
     </div>
 
   </div>
 
   <!-- Bottom Navigation -->
   <div class="nav-bar">
-    <div class="nav-item active" id="nav-home" onclick="switchTab('home')">🔥</div>
+    <div class="nav-item" id="nav-home" onclick="switchTab('home')">🔥</div>
     <div class="nav-item" id="nav-matches" onclick="switchTab('matches')">💬</div>
-    <div class="nav-item" id="nav-profile" onclick="switchTab('profile')">👤</div>
+    <div class="nav-item active" id="nav-profile" onclick="switchTab('profile')">👤</div>
+  </div>
+
+  <!-- ==================== VIP PACKAGES MODAL ==================== -->
+  <div class="vip-modal-overlay" id="vip-modal">
+    <div class="vip-modal-content">
+      
+      <div class="modal-top-bar">
+        <div style="font-size: 18px; font-weight: 800; color: var(--accent-gold);">👑 TRUE LOVE VIP</div>
+        <button class="close-modal-btn" onclick="closeVIPModal()">✕</button>
+      </div>
+
+      <h3 style="text-align: center; font-size: 18px;" id="txt-vip-main-title">የቪአይፒ ፓኬጅ ይምረጡ</h3>
+
+      <!-- Packages -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="pkg-card" onclick="selectVIPPackage('1 Month (199 Birr)', '1 ወር (199 ብር)', this)">
+          <div class="pkg-info">
+            <h4 id="v-p1-title">የ1 ወር ቪአይፒ</h4>
+            <p id="v-p1-desc">ለ30 ቀናት ሙሉ አገልግሎት</p>
+          </div>
+          <div class="pkg-price" id="v-p1-price">199 ብር</div>
+        </div>
+
+        <div class="pkg-card" onclick="selectVIPPackage('3 Months (499 Birr)', '3 ወር (499 ብር)', this)">
+          <div class="pkg-info">
+            <h4 id="v-p2-title">የ3 ወር ቪአይፒ</h4>
+            <p id="v-p2-desc">ለ90 ቀናት (ቅናሽ ያለው)</p>
+          </div>
+          <div class="pkg-price" id="v-p2-price">499 ብር</div>
+        </div>
+
+        <div class="pkg-card selected" id="default-vip-card" onclick="selectVIPPackage('6 Months (899 Birr)', '6 ወር (899 ብር)', this)">
+          <div class="pkg-info">
+            <h4 id="v-p3-title">የ6 ወር ቪአይፒ</h4>
+            <p id="v-p3-desc">ለ180 ቀናት ሙሉ አገልግሎት</p>
+          </div>
+          <div class="pkg-price" id="v-p3-price">899 ብር</div>
+        </div>
+
+        <div class="pkg-card" onclick="selectVIPPackage('1 Year (1699 Birr)', '1 ዓመት (1699 ብር)', this)">
+          <div class="pkg-info">
+            <h4 id="v-p4-title">የ1 ዓመት ቪአይፒ</h4>
+            <p id="v-p4-desc">ለ365 ቀናት (ትልቅ ቅናሽ)</p>
+          </div>
+          <div class="pkg-price" id="v-p4-price">1699 ብር</div>
+        </div>
+      </div>
+
+      <!-- Payment -->
+      <div class="payment-card">
+        <h4 style="font-size: 15px;" id="txt-pay-title">የአከፋፈል መመሪያ</h4>
+        
+        <div style="font-size: 13px;">
+          <span id="txt-pay-prefix">እባክዎ የመረጡትን</span> <span id="selected-pkg-label" style="color: var(--accent-red); font-weight: bold;">6 Months (899 Birr)</span> <span id="txt-pay-suffix">ክፍያ በሚከተሉት አካውንቶች ያስገቡ፡</span>
+        </div>
+
+        <div class="account-box">
+          <strong id="txt-cbe-label">ንግድ ባንክ (CBE):</strong> 1000630380662<br>
+          <strong id="txt-tele-label">ቴሌብር (telebirr):</strong> 0945211516<br>
+          <strong id="txt-name-label">ስም:</strong> ሳሙኤል teketel
+        </div>
+
+        <div style="font-size: 12px; color: var(--subtext-color);" id="txt-proof-desc">
+          ክፍያውን ከፈጸሙ በኋላ የስክሪንሾት ፎቶውን እዚህ ያያይዙ፡
+        </div>
+
+        <div class="upload-btn" onclick="document.getElementById('vip-ss-file').click()">
+          📸 <span id="txt-select-btn">ስክሪንሾት ለመምረጥ እዚህ ይጫኑ</span>
+        </div>
+        <input type="file" id="vip-ss-file" accept="image/*" style="display:none;" onchange="handleVIPReceipt(event)">
+        <img id="vip-ss-preview" class="preview-ss" alt="Receipt Preview">
+
+        <button class="submit-btn" onclick="submitVIPReceipt()">
+          ✅ <span id="txt-submit-btn">ማረጋገጫውን ላክ</span>
+        </button>
+      </div>
+
+    </div>
   </div>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    // Language Pack
+    const FREE_DAILY_PROFILE_LIMIT = 25;
+    const FREE_DAILY_CHAT_LIMIT = 10;
+    const VIP_TRIAL_DAYS = 3; 
+
+    let uploadedPhotoBase64 = "";
+    let selectedVIPPkgEn = "6 Months (899 Birr)";
+    let selectedVIPPkgAm = "6 ወር (899 ብር)";
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    let userUsage = JSON.parse(localStorage.getItem('user_daily_usage')) || { date: todayStr, profilesSeen: 0, chatsOpened: 0 };
+
+    if (userUsage.date !== todayStr) {
+      userUsage = { date: todayStr, profilesSeen: 0, chatsOpened: 0 };
+      localStorage.setItem('user_daily_usage', JSON.stringify(userUsage));
+    }
+
     const translations = {
       am: {
         matchesTitle: "የተወደዱ ፕሮፋይሎች (Matches)",
-        editTitle: "ፕሮፋይል አስተካክል",
+        editTitle: "መጀመሪያ ፕሮፋይልዎን ይመዝግቡ",
+        editTitleSaved: "ፕሮፋይል አስተካክል",
         lblName: "ስም",
         lblAge: "ዕድሜ",
+        lblGender: "ፆታ",
+        contactLocTitle: "📍 ስልክ እና ቦታ",
+        lblPhone: "የስልክ ቁጥር",
+        lblLocation: "አካባቢ / ቦታ",
+        prefTitle: "🎯 የምፈልገው ሰው ስብስብ",
+        lblLookingFor: "የምፈልገው ፆታ",
+        lblPrefAge: "የእድሜ ክልል",
         lblReligion: "ሃይማኖት",
+        lblPhoto: "ፎቶ ይምረጡ",
         lblBio: "ስለ እኔ (Bio)",
-        btnSave: "ሴቭ አድርግ",
+        btnSave: "መዝግብ እና ጀምር 🎉",
+        btnSaveEdit: "ሴቭ አድርግ",
         noMatches: "እስካሁን ምንም የተወደደ ፕሮፋይል የለም",
-        matchAlert: "ከ {name} ጋር ተወዳዳችኋል! 🎉\nመልእክት ለመላክ የ 💬 ምልክቷን ይጫኑ።"
+        fileStatus: "📷 ፎቶ ለመምረጥ እዚህ ይጫኑ",
+        relManual: "✍️ በጽሑፍ ለማስገባት",
+        placeRel: "ሃይማኖትዎን ይጻፉ...",
+        placeName: "ስም ያስገቡ",
+        placeLocation: "አዲስ አበባ፣ ኢትዮጵያ",
+        placeBio: "ስለራስዎ የሆነ ነገር ይጻፉ...",
+        btnSharePhone: "📱 የቴሌግራም ስልክ ቁጥር ያጋሩ",
+        btnGpsLocation: "📍 የቀጥታ ጂፒኤስ ቦታ ያግኙ",
+        genders: { female: "ሴት", male: "ወንድ" },
+        looking: { male: "ወንድ", female: "ሴት", both: "ሁለቱንም" },
+        religions: { orthodox: "ኦርቶዶክስ", protestant: "ፕሮቴስታንት", muslim: "ሙስሊም", catholic: "ካቶሊክ" },
+        ageAny: "ማንኛውም እድሜ",
+
+        // VIP Modal
+        vipMainTitle: "የቪአይፒ ፓኬጅ ይምረጡ",
+        vp1Title: "የ1 ወር ቪአይፒ", vp1Desc: "ለ30 ቀናት ሙሉ አገልግሎት", vp1Price: "199 ብር",
+        vp2Title: "የ3 ወር ቪአይፒ", vp2Desc: "ለ90 ቀናት (ቅናሽ ያለው)", vp2Price: "499 ብር",
+        vp3Title: "የ6 ወር ቪአይፒ", vp3Desc: "ለ180 ቀናት ሙሉ አገልግሎት", vp3Price: "899 ብር",
+        vp4Title: "የ1 ዓመት ቪአይፒ", vp4Desc: "ለ365 ቀናት (ትልቅ ቅናሽ)", vp4Price: "1699 ብር",
+        payTitle: "የአከፋፈል መመሪያ",
+        payPrefix: "እባክዎ የመረጡትን",
+        paySuffix: "ክፍያ በሚከተሉት አካውንቶች ያስገቡ፡",
+        cbeLabel: "ንግድ ባንክ (CBE):",
+        teleLabel: "ቴሌብር (telebirr):",
+        nameLabel: "ስም:",
+        proofDesc: "ክፍያውን ከፈጸሙ በኋላ የስክሪንሾት ፎቶውን እዚህ ያያይዙ፡",
+        selectBtn: "ስክሪንሾት ለመምረጥ እዚህ ይጫኑ",
+        submitBtn: "ማረጋገጫውን ላክ"
       },
       en: {
         matchesTitle: "Your Matches",
-        editTitle: "Edit Profile",
+        editTitle: "Register Your Profile First",
+        editTitleSaved: "Edit Profile",
         lblName: "Name",
         lblAge: "Age",
+        lblGender: "Gender",
+        contactLocTitle: "📍 Contact & Location",
+        lblPhone: "Phone Number",
+        lblLocation: "Location",
+        prefTitle: "🎯 Preferences",
+        lblLookingFor: "Looking For",
+        lblPrefAge: "Age Range Preference",
         lblReligion: "Religion",
+        lblPhoto: "Choose Photo",
         lblBio: "About Me (Bio)",
-        btnSave: "Save Profile",
+        btnSave: "Save & Start 🎉",
+        btnSaveEdit: "Save Profile",
         noMatches: "No matches found yet",
-        matchAlert: "You matched with {name}! 🎉\nClick 💬 to chat."
+        fileStatus: "📷 Tap here to select photo",
+        relManual: "✍️ Type manually",
+        placeRel: "Type your religion...",
+        placeName: "Enter Name",
+        placeLocation: "Addis Ababa, Ethiopia",
+        placeBio: "Tell something about yourself...",
+        btnSharePhone: "📱 Share Telegram Phone Number",
+        btnGpsLocation: "📍 Get Live GPS Location",
+        genders: { female: "Female", male: "Male" },
+        looking: { male: "Male", female: "Female", both: "Both" },
+        religions: { orthodox: "Orthodox", protestant: "Protestant", muslim: "Muslim", catholic: "Catholic" },
+        ageAny: "Any Age",
+
+        // VIP Modal
+        vipMainTitle: "Select VIP Package",
+        vp1Title: "1 Month VIP", vp1Desc: "Full service for 30 days", vp1Price: "199 Birr",
+        vp2Title: "3 Months VIP", vp2Desc: "90 days (Discounted)", vp2Price: "499 Birr",
+        vp3Title: "6 Months VIP", vp3Desc: "Full service for 180 days", vp3Price: "899 Birr",
+        vp4Title: "1 Year VIP", vp4Desc: "365 days (Big discount)", vp4Price: "1699 Birr",
+        payTitle: "Payment Instructions",
+        payPrefix: "Please transfer payment for",
+        paySuffix: "to the following accounts:",
+        cbeLabel: "Commercial Bank (CBE):",
+        teleLabel: "telebirr:",
+        nameLabel: "Name:",
+        proofDesc: "After payment, upload your receipt screenshot here:",
+        selectBtn: "Tap here to select screenshot",
+        submitBtn: "Submit Receipt"
       }
     };
 
     let currentLang = localStorage.getItem('app_lang') || 'am';
     let isLightMode = localStorage.getItem('app_light_mode') === 'true';
-    let colorThemes = ['', 'theme-purple', 'theme-ocean'];
-    let currentThemeIdx = parseInt(localStorage.getItem('app_theme_idx') || '0');
-
-    // Dummy Profiles List
+    let colorThemes = ['', 'theme-pink', 'theme-ocean'];
+    let currentThemeIdx = parseInt(localStorage.getItem('app_theme_idx') || '0')
     const profiles = [
-      { id: 1, name: "ሀና፣ 22", bio: "አዲስ ሰዎችን ማወቅ እና ካፌዎችን መጎብኘት እወዳለሁ ☕✨", religion: "ኦርቶዶክስ", zodiac: "Aries", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", username: "telegram" },
-      { id: 2, name: "ዮናስ፣ 25", bio: "የቴክኖሎጂ እና የሙዚቃ አፍቃሪ 🎧💻", religion: "ፕሮቴስታንት", zodiac: "Leo", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", username: "telegram" },
-      { id: 3, name: "ሰላም፣ 21", bio: "መጽሐፍ ማንበብ እና ጉዞ ደስታዬ ነው 📚✈️", religion: "ሙስሊም", zodiac: "Virgo", img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500", username: "telegram" }
+      { id: 1, name: "ሀና፣ 22", bio: "አዲስ ሰዎችን ማወቅ እና ካፌዎችን መጎብኘት እወዳለሁ ☕✨", religion: "Orthodox", img: "https://images.pexels.com/photos/1382731/pexels-photo-1382731.jpeg?auto=compress&cs=tinysrgb&w=600", username: "telegram" },
+      { id: 2, name: "ዮናስ፣ 25", bio: "የቴክኖሎጂ እና የሙዚቃ አፍቃሪ 🎧💻", religion: "Protestant", img: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=600", username: "telegram" }
     ];
 
     let currentIndex = 0;
     let myMatches = [];
 
-    // Light/Dark Mode Switcher
+    /* VIP Modal Handlers */
+    function openVIPModal() {
+      document.getElementById('vip-modal').style.display = 'flex';
+    }
+
+    function closeVIPModal() {
+      document.getElementById('vip-modal').style.display = 'none';
+    }
+
+    function selectVIPPackage(pkgEn, pkgAm, element) {
+      selectedVIPPkgEn = pkgEn;
+      selectedVIPPkgAm = pkgAm;
+      document.querySelectorAll('#vip-modal .pkg-card').forEach(el => el.classList.remove('selected'));
+      element.classList.add('selected');
+      document.getElementById('selected-pkg-label').innerText = currentLang === 'am' ? pkgAm : pkgEn;
+    }
+
+    function handleVIPReceipt(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const preview = document.getElementById('vip-ss-preview');
+          preview.src = evt.target.result;
+          preview.style.display = 'block';
+          document.getElementById('txt-select-btn').innerText = "✅ " + file.name;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function submitVIPReceipt() {
+      const fileInput = document.getElementById('vip-ss-file');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        tg.showAlert(currentLang === 'am' ? "እባክዎን መጀመሪያ የደረሰኙን ስክሪንሾት ያያይዙ!" : "Please upload the screenshot receipt first!");
+        return;
+      }
+
+      tg.showAlert(currentLang === 'am' ? "✅ ደረሰኙ በትክክል ተልኳል! በአጭር ጊዜ ውስጥ ተመርምሮ ቪአይፒው ይበራልዎታል።" : "✅ Receipt submitted! Your VIP will be activated shortly.");
+      closeVIPModal();
+    }
+
+    function checkVIPStatus() {
+      const savedProfile = JSON.parse(localStorage.getItem('user_profile'));
+      
+      if (localStorage.getItem('user_is_vip') === 'true') {
+        return { isVIP: true, label: currentLang === 'am' ? "👑 VIP አባል" : "👑 VIP Member" };
+      }
+
+      if (savedProfile && savedProfile.registeredAt) {
+        const regDate = new Date(savedProfile.registeredAt);
+        const currentDate = new Date();
+        const diffDays = Math.floor((currentDate - regDate) / (1000 * 60 * 60 * 24));
+
+        if (diffDays < VIP_TRIAL_DAYS) {
+          const remaining = VIP_TRIAL_DAYS - diffDays;
+          return { 
+            isVIP: true, 
+            label: currentLang === 'am' ? `👑 VIP (${remaining} ቀን ይቀራል)` : `👑 VIP (${remaining} days left)` 
+          };
+        }
+      }
+
+      return { isVIP: false, label: "" };
+    }
+
+    function updateLimitCountersUI() {
+      const viewTag = document.getElementById('view-counter-tag');
+      const chatTag = document.getElementById('chat-counter-tag');
+      const vipBadge = document.getElementById('user-status-tag');
+      
+      const vipStatus = checkVIPStatus();
+
+      if (vipStatus.isVIP) {
+        vipBadge.style.display = 'inline-block';
+        vipBadge.innerText = vipStatus.label;
+        viewTag.innerText = currentLang === 'am' ? `👑 VIP አባል፡ ያለገደብ ፕሮፋይል ማየት ይችላሉ` : `👑 VIP Access: Unlimited Profile Views`;
+        chatTag.innerText = currentLang === 'am' ? `👑 VIP አባል፡ ያለገደብ ቻት ማድረግ ይችላሉ` : `👑 VIP Access: Unlimited Chats`;
+      } else {
+        vipBadge.style.display = 'none';
+        viewTag.innerText = currentLang === 'am' ? `የዛሬ ያዩት፡ ${userUsage.profilesSeen}/${FREE_DAILY_PROFILE_LIMIT} ፕሮፋይል` : `Today's Seen: ${userUsage.profilesSeen}/${FREE_DAILY_PROFILE_LIMIT}`;
+        chatTag.innerText = currentLang === 'am' ? `የዛሬ ቻት፡ ${userUsage.chatsOpened}/${FREE_DAILY_CHAT_LIMIT}` : `Today's Chats: ${userUsage.chatsOpened}/${FREE_DAILY_CHAT_LIMIT}`;
+      }
+    }
+
+    function requestTelegramContact() {
+      if (tg.requestContact) {
+        tg.requestContact((granted, response) => {
+          if (granted && response?.responseUnpack?.phone_number) {
+            document.getElementById('my-input-phone').value = "+" + response.responseUnpack.phone_number;
+            tg.showAlert(currentLang === 'am' ? "✅ የስልክ ቁጥርዎ በትክክል ተጋርቷል!" : "✅ Phone number shared successfully!");
+          }
+        });
+      } else {
+        tg.showAlert(currentLang === 'am' ? "እባክዎን ስልክ ቁጥርዎን በጽሑፍ ያስገቡ" : "Please type your phone number manually.");
+      }
+    }
+
+    function requestGPSLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude.toFixed(4);
+            const lon = position.coords.longitude.toFixed(4);
+            document.getElementById('my-input-location').value = `GPS: ${lat}, ${lon}`;
+            tg.showAlert(currentLang === 'am' ? "✅ አካባቢዎ በትክክል ተገኝቷል!" : "✅ Location updated successfully!");
+          },
+          (error) => {
+            tg.showAlert(currentLang === 'am' ? "ቦታ ማግኘት አልተቻለም። እባክዎን በጽሑፍ ያስገቡ" : "Unable to retrieve location. Please type manually.");
+          }
+        );
+      } else {
+        tg.showAlert(currentLang === 'am' ? "ጂፒኤስ በዚህ ስልክ ላይ አይሰራም" : "GPS location is not supported on this device.");
+      }
+    }
+
+    function toggleManualReligionInput() {
+      const select = document.getElementById('my-input-religion');
+      const manualInput = document.getElementById('my-input-religion-manual');
+      manualInput.style.display = select.value === 'MANUAL' ? 'block' : 'none';
+    }
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          uploadedPhotoBase64 = evt.target.result;
+          const preview = document.getElementById('my-photo-preview');
+          preview.src = uploadedPhotoBase64;
+          preview.style.display = 'block';
+          document.getElementById('txt-file-status').innerText = "✅ " + file.name;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
     function applyMode() {
       if (isLightMode) {
         document.body.classList.add('light-mode');
@@ -280,7 +824,6 @@
       applyMode();
     }
 
-    // Color Accent Theme Switcher
     function applyTheme() {
       colorThemes.forEach(t => t && document.body.classList.remove(t));
       if (colorThemes[currentThemeIdx]) {
@@ -294,18 +837,83 @@
       applyTheme();
     }
 
-    // Language Switcher
     function applyLanguage() {
       const t = translations[currentLang];
-      document.getElementById('lang-btn').innerText = currentLang === 'am' ? "🇪🇹 AM" : "🇬🇧 EN";
+      const isSaved = localStorage.getItem('user_profile') !== null;
+      
+      document.getElementById('lang-btn').innerText = currentLang === 'am' ? "🇬🇧 EN" : "🇪🇹 AM";
       document.getElementById('txt-matches-title').innerText = t.matchesTitle;
-      document.getElementById('txt-edit-title').innerText = t.editTitle;
+      document.getElementById('txt-edit-title').innerText = isSaved ? t.editTitleSaved : t.editTitle;
       document.getElementById('lbl-name').innerText = t.lblName;
       document.getElementById('lbl-age').innerText = t.lblAge;
+      document.getElementById('lbl-gender').innerText = t.lblGender;
+      document.getElementById('txt-contact-loc-title').innerText = t.contactLocTitle;
+      document.getElementById('lbl-phone').innerText = t.lblPhone;
+      document.getElementById('lbl-location').innerText = t.lblLocation;
+      document.getElementById('txt-pref-title').innerText = t.prefTitle;
+      document.getElementById('lbl-looking-for').innerText = t.lblLookingFor;
+      document.getElementById('lbl-pref-age').innerText = t.lblPrefAge;
       document.getElementById('lbl-religion').innerText = t.lblReligion;
+      document.getElementById('lbl-photo').innerText = t.lblPhoto;
       document.getElementById('lbl-bio').innerText = t.lblBio;
-      document.getElementById('btn-save').innerText = t.btnSave;
-      renderMatches();
+      document.getElementById('btn-save').innerText = isSaved ? t.btnSaveEdit : t.btnSave;
+      document.getElementById('opt-rel-manual').innerText = t.relManual;
+      
+      document.getElementById('my-input-name').placeholder = t.placeName;
+      document.getElementById('my-input-location').placeholder = t.placeLocation;
+      document.getElementById('my-input-bio').placeholder = t.placeBio;
+      document.getElementById('my-input-religion-manual').placeholder = t.placeRel;
+
+      document.getElementById('btn-share-phone').innerHTML = t.btnSharePhone;
+      document.getElementById('btn-gps-location').innerHTML = t.btnGpsLocation;
+
+      if (!uploadedPhotoBase64) {
+        document.getElementById('txt-file-status').innerText = t.fileStatus;
+      }
+
+      document.getElementById('opt-female').innerText = t.genders.female;
+      document.getElementById('opt-male').innerText = t.genders.male;
+      document.getElementById('opt-look-male').innerText = t.looking.male;
+      document.getElementById('opt-look-female').innerText = t.looking.female;
+      document.getElementById('opt-look-both').innerText = t.looking.both;
+      document.getElementById('opt-age-any').innerText = t.ageAny;
+
+      document.getElementById('opt-rel-orthodox').innerText = t.religions.orthodox;
+      document.getElementById('opt-rel-protestant').innerText = t.religions.protestant;
+      document.getElementById('opt-rel-muslim').innerText = t.religions.muslim;
+      document.getElementById('opt-rel-catholic').innerText = t.religions.catholic;
+
+      // VIP Modal Translation
+      document.getElementById('txt-vip-main-title').innerText = t.vipMainTitle;
+      document.getElementById('v-p1-title').innerText = t.vp1Title;
+      document.getElementById('v-p1-desc').innerText = t.vp1Desc;
+      document.getElementById('v-p1-price').innerText = t.vp1Price;
+
+      document.getElementById('v-p2-title').innerText = t.vp2Title;
+      document.getElementById('v-p2-desc').innerText = t.vp2Desc;
+      document.getElementById('v-p2-price').innerText = t.vp2Price;
+
+      document.getElementById('v-p3-title').innerText = t.vp3Title;
+      document.getElementById('v-p3-desc').innerText = t.vp3Desc;
+      document.getElementById('v-p3-price').innerText = t.vp3Price;
+
+      document.getElementById('v-p4-title').innerText = t.vp4Title;
+      document.getElementById('v-p4-desc').innerText = t.vp4Desc;
+      document.getElementById('v-p4-price').innerText = t.vp4Price;
+
+      document.getElementById('txt-pay-title').innerText = t.payTitle;
+      document.getElementById('txt-pay-prefix').innerText = t.payPrefix;
+      document.getElementById('txt-pay-suffix').innerText = t.paySuffix;
+      document.getElementById('txt-cbe-label').innerText = t.cbeLabel;
+      document.getElementById('txt-tele-label').innerText = t.teleLabel;
+      document.getElementById('txt-name-label').innerText = t.nameLabel;
+      document.getElementById('txt-proof-desc').innerText = t.proofDesc;
+      document.getElementById('txt-select-btn').innerText = t.selectBtn;
+      document.getElementById('txt-submit-btn').innerText = t.submitBtn;
+
+      document.getElementById('selected-pkg-label').innerText = currentLang === 'am' ? selectedVIPPkgAm : selectedVIPPkgEn;
+
+      updateLimitCountersUI();
     }
 
     function toggleLanguage() {
@@ -315,25 +923,37 @@
     }
 
     function renderProfile() {
+      if (profiles.length === 0) return;
       const p = profiles[currentIndex];
       document.getElementById('profile-img').src = p.img;
       document.getElementById('card-name').innerText = p.name;
-      document.getElementById('card-religion-zodiac').innerText = `☦️ ${p.religion} | 🌟 ${p.zodiac}`;
+      document.getElementById('card-religion-zodiac').innerText = `☦️ ${p.religion}`;
       document.getElementById('card-bio').innerText = p.bio;
+      updateLimitCountersUI();
     }
 
     function nextProfile(action) {
+      const vipStatus = checkVIPStatus();
+
+      if (!vipStatus.isVIP && userUsage.profilesSeen >= FREE_DAILY_PROFILE_LIMIT) {
+        tg.showAlert(currentLang === 'am' ? "⚠️ የ 3 ቀን ነፃ VIP ጊዜዎ አልቋል! የዛሬውን የ 25 ፕሮፋይል ገደብ ጨርሰዋል።\n\nያለገደብ ለመጠቀም VIP ይግዙ። 👑" : "⚠️ Free trial expired! Daily 25 profile limit reached.\n\nBuy VIP for unlimited access. 👑");
+        openVIPModal();
+        return;
+      }
+
+      if (!vipStatus.isVIP) {
+        userUsage.profilesSeen++;
+        localStorage.setItem('user_daily_usage', JSON.stringify(userUsage));
+      }
+
       if (action === 'like') {
         tg.HapticFeedback?.impactOccurred('medium');
         const likedProfile = profiles[currentIndex];
-        
         if (!myMatches.some(m => m.id === likedProfile.id)) {
           myMatches.push(likedProfile);
           renderMatches();
         }
-        
-        const msg = translations[currentLang].matchAlert.replace('{name}', likedProfile.name);
-        tg.showAlert(msg);
+        tg.showAlert(currentLang === 'am' ? `ከ ${likedProfile.name} ጋር ተወዳዳችኋል! 🎉` : `You matched with ${likedProfile.name}! 🎉`);
       }
       currentIndex = (currentIndex + 1) % profiles.length;
       renderProfile();
@@ -353,7 +973,7 @@
         const item = document.createElement('div');
         item.className = 'match-item';
         item.innerHTML = `
-          <img src="${m.img}" class="match-img" alt="user">
+          <img src="${m.img}" class="match-img" alt="user" onerror="this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png'">
           <div>
             <div style="font-weight:bold; font-size:14px;">${m.name}</div>
             <div style="font-size:11px; color:var(--subtext-color);">${m.religion}</div>
@@ -365,68 +985,87 @@
     }
 
     function openChat(username) {
-      if (username) {
-        tg.openTelegramLink(`https://t.me/${username}`);
+      const vipStatus = checkVIPStatus();
+
+      if (!vipStatus.isVIP && userUsage.chatsOpened >= FREE_DAILY_CHAT_LIMIT) {
+        tg.showAlert(currentLang === 'am' ? "⚠️ የ 3 ቀን ነፃ VIP ጊዜዎ አልቋል! የዛሬውን የ 10 ቻት ገደብ ጨርሰዋል።\n\nያለገደብ ቻት ለማድረግ VIP ይግዙ። 👑" : "⚠️ Free trial expired! Daily 10 chats limit reached.\n\nBuy VIP to chat unlimited. 👑");
+        openVIPModal();
+        return;
       }
+
+      if (!vipStatus.isVIP) {
+        userUsage.chatsOpened++;
+        localStorage.setItem('user_daily_usage', JSON.stringify(userUsage));
+        updateLimitCountersUI();
+      }
+
+      if (username) tg.openTelegramLink(`https://t.me/${username}`);
     }
 
     function switchTab(tab) {
-      const swipeView = document.getElementById('swipe-view');
-      const matchesView = document.getElementById('matches-view');
-      const profileView = document.getElementById('profile-view');
-      
-      const navHome = document.getElementById('nav-home');
-      const navMatches = document.getElementById('nav-matches');
-      const navProfile = document.getElementById('nav-profile');
-
-      swipeView.style.display = 'none';
-      matchesView.style.display = 'none';
-      profileView.style.display = 'none';
-
-      navHome.classList.remove('active');
-      navMatches.classList.remove('active');
-      navProfile.classList.remove('active');
-
-      if (tab === 'home') {
-        swipeView.style.display = 'flex';
-        navHome.classList.add('active');
-      } else if (tab === 'matches') {
-        matchesView.style.display = 'flex';
-        navMatches.classList.add('active');
-      } else if (tab === 'profile') {
-        profileView.style.display = 'flex';
-        navProfile.classList.add('active');
+      const isSaved = localStorage.getItem('user_profile') !== null;
+      if (!isSaved && (tab === 'home' || tab === 'matches')) {
+        tg.showAlert(currentLang === 'am' ? "እባክዎን መጀመሪያ ፕሮፋይልዎን ይመዝግቡ!" : "Please register your profile first!");
+        tab = 'profile';
       }
+
+      document.getElementById('swipe-view').style.display = tab === 'home' ? 'flex' : 'none';
+      document.getElementById('matches-view').style.display = tab === 'matches' ? 'flex' : 'none';
+      document.getElementById('profile-view').style.display = tab === 'profile' ? 'flex' : 'none';
+
+      document.getElementById('nav-home').classList.toggle('active', tab === 'home');
+      document.getElementById('nav-matches').classList.toggle('active', tab === 'matches');
+      document.getElementById('nav-profile').classList.toggle('active', tab === 'profile');
     }
 
     function saveMyProfile() {
       const name = document.getElementById('my-input-name').value;
       const age = document.getElementById('my-input-age').value;
-      const religion = document.getElementById('my-input-religion').value;
+      const gender = document.getElementById('my-input-gender').value;
+      const phone = document.getElementById('my-input-phone').value;
+      const location = document.getElementById('my-input-location').value;
+      const lookingFor = document.getElementById('my-pref-looking').value;
+      const prefAge = document.getElementById('my-pref-age').value;
+      
+      let religionSelect = document.getElementById('my-input-religion').value;
+      if (religionSelect === 'MANUAL') religionSelect = document.getElementById('my-input-religion-manual').value;
+
       const bio = document.getElementById('my-input-bio').value;
 
       if (!name || !age) {
-        tg.showAlert("Please fill name and age!");
+        tg.showAlert(currentLang === 'am' ? "እባክዎን ስም እና ዕድሜ ያስገቡ!" : "Please fill name and age!");
         return;
       }
 
-      localStorage.setItem('user_profile', JSON.stringify({ name, age, religion, bio }));
-      tg.showAlert("Saved! 🎉");
+      const existingProfile = JSON.parse(localStorage.getItem('user_profile')) || {};
+      const registeredAt = existingProfile.registeredAt || new Date().toISOString();
+
+      const userProfile = { name, age, gender, phone, location, lookingFor, prefAge, religion: religionSelect, photo: uploadedPhotoBase64, bio, registeredAt };
+      localStorage.setItem('user_profile', JSON.stringify(userProfile));
+
+      tg.showAlert(currentLang === 'am' ? "እንኳን ደስ አለዎት! የ 3 ቀን ነፃ VIP አባልነት ተበርክቶልዎታል 🎉" : "Saved successfully! 3 Days Free VIP trial activated 🎉");
+      applyLanguage();
       switchTab('home');
     }
 
     function loadMyProfile() {
       const saved = localStorage.getItem('user_profile');
       if (saved) {
-        const data = JSON.parse(saved);
-        document.getElementById('my-input-name').value = data.name || '';
-        document.getElementById('my-input-age').value = data.age || '';
-        document.getElementById('my-input-religion').value = data.religion || 'ኦርቶዶክስ';
-        document.getElementById('my-input-bio').value = data.bio || '';
+        const p = JSON.parse(saved);
+        document.getElementById('my-input-name').value = p.name || '';
+        document.getElementById('my-input-age').value = p.age || '';
+        document.getElementById('my-input-gender').value = p.gender || 'Female';
+        document.getElementById('my-input-phone').value = p.phone || '';
+        document.getElementById('my-input-location').value = p.location || '';
+        document.getElementById('my-pref-looking').value = p.lookingFor || 'Male';
+        document.getElementById('my-pref-age').value = p.prefAge || '18-25';
+        document.getElementById('my-input-bio').value = p.bio || '';
+        switchTab('home');
+      } else {
+        switchTab('profile');
       }
     }
 
-    // Init
     applyMode();
     applyTheme();
     applyLanguage();
@@ -434,4 +1073,4 @@
     loadMyProfile();
   </script>
 </body>
-  </html>
+</html>
