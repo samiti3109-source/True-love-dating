@@ -70,13 +70,27 @@
     }
     .form-group { display: flex; flex-direction: column; gap: 5px; text-align: left; }
     label { font-size: 13px; color: #aaa; }
-    input, textarea, select {
+    input, textarea {
       background: #181824; border: 1px solid #2a2a3a; padding: 10px; color: white;
       border-radius: 8px; font-size: 14px; outline: none;
     }
     .save-btn {
       background: #ff2a6d; color: white; border: none; padding: 12px;
       border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px;
+    }
+
+    /* Matches List */
+    .matches-container {
+      width: 100%; max-width: 340px; display: none; flex-direction: column; gap: 10px;
+    }
+    .match-item {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #181824; padding: 10px 15px; border-radius: 12px; border: 1px solid #2a2a3a;
+    }
+    .match-avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
+    .chat-btn {
+      background: #0088cc; color: white; border: none; padding: 6px 12px;
+      border-radius: 6px; font-size: 12px; cursor: pointer; text-decoration: none;
     }
 
     /* Bottom Navigation Bar */
@@ -114,7 +128,15 @@
       </div>
     </div>
 
-    <!-- 2. MY PROFILE EDIT VIEW -->
+    <!-- 2. MATCHES VIEW -->
+    <div id="matches-view" class="matches-container">
+      <h3 style="margin-bottom: 10px;">የእርስዎ Matches ❤️</h3>
+      <div id="matches-list" style="display: flex; flex-direction: column; gap: 10px;">
+        <p style="color: #666; font-size: 13px;">እስካሁን ምንም Match የለም። ሰዎችን Like ያድርጉ!</p>
+      </div>
+    </div>
+
+    <!-- 3. MY PROFILE EDIT VIEW -->
     <div id="profile-view" class="form-container">
       <h3 style="margin-bottom: 10px;">ፕሮፋይል አስተካክል</h3>
       <div class="form-group">
@@ -137,6 +159,7 @@
   <!-- Bottom Navigation -->
   <div class="nav-bar">
     <div class="nav-item active" id="nav-home" onclick="switchTab('home')">🔥</div>
+    <div class="nav-item" id="nav-matches" onclick="switchTab('matches')">💬</div>
     <div class="nav-item" id="nav-profile" onclick="switchTab('profile')">👤</div>
   </div>
 
@@ -144,20 +167,19 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    // Telegram User Info
     const tgUser = tg.initDataUnsafe?.user;
     if (tgUser) {
       document.getElementById('user-display').innerText = tgUser.first_name;
     }
 
-    // Dummy Profiles
     const profiles = [
-      { name: "ሀና፣ 22", bio: "አዲስ ሰዎችን ማወቅ እና ካፌዎችን መጎብኘት እወዳለሁ ☕✨", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500" },
-      { name: "ዮናስ፣ 25", bio: "የቴክኖሎጂ እና የሙዚቃ አፍቃሪ 🎧💻", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500" },
-      { name: "ሰላም፣ 21", bio: "መጽሐፍ ማንበብ እና ጉዞ ደስታዬ ነው 📚✈️", img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500" }
+      { id: 1, name: "ሀና፣ 22", bio: "አዲስ ሰዎችን ማወቅ እና ካፌዎችን መጎብኘት እወዳለሁ ☕✨", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", username: "telegram" },
+      { id: 2, name: "ዮናስ፣ 25", bio: "የቴክኖሎጂ እና የሙዚቃ አፍቃሪ 🎧💻", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", username: "telegram" },
+      { id: 3, name: "ሰላም፣ 21", bio: "መጽሐፍ ማንበብ እና ጉዞ ደስታዬ ነው 📚✈️", img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500", username: "telegram" }
     ];
 
     let currentIndex = 0;
+    let myMatches = [];
 
     function renderProfile() {
       const p = profiles[currentIndex];
@@ -169,32 +191,51 @@
     function nextProfile(action) {
       if (action === 'like') {
         tg.HapticFeedback?.impactOccurred('medium');
+        const currentPerson = profiles[currentIndex];
+        
+        // Add to matches if not already added
+        if (!myMatches.some(m => m.id === currentPerson.id)) {
+          myMatches.push(currentPerson);
+          updateMatchesUI();
+          tg.showAlert(`🎉 It's a Match! ከ ${currentPerson.name.split('፣')[0]} ጋር ተጣመዳችኋል!`);
+        }
       }
       currentIndex = (currentIndex + 1) % profiles.length;
       renderProfile();
     }
 
-    // Navigation Switcher
-    function switchTab(tab) {
-      const swipeView = document.getElementById('swipe-view');
-      const profileView = document.getElementById('profile-view');
-      const navHome = document.getElementById('nav-home');
-      const navProfile = document.getElementById('nav-profile');
+    function updateMatchesUI() {
+      const listEl = document.getElementById('matches-list');
+      if (myMatches.length === 0) return;
 
-      if (tab === 'home') {
-        swipeView.style.display = 'flex';
-        profileView.style.display = 'none';
-        navHome.classList.add('active');
-        navProfile.classList.remove('active');
-      } else {
-        swipeView.style.display = 'none';
-        profileView.style.display = 'flex';
-        navHome.classList.remove('active');
-        navProfile.classList.add('active');
-      }
+      listEl.innerHTML = myMatches.map(m => `
+        <div class="match-item">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <img class="match-avatar" src="${m.img}">
+            <div>
+              <div style="font-size:14px; font-weight:bold;">${m.name}</div>
+              <div style="font-size:11px; color:#aaa;">Match ሆናችኋል!</div>
+            </div>
+          </div>
+          <button class="chat-btn" onclick="openChat('${m.username}')">Chat 💬</button>
+        </div>
+      `).join('');
     }
 
-    // Save Profile to LocalStorage
+    function openChat(username) {
+      tg.openTelegramLink(`https://t.me/${username}`);
+    }
+
+    function switchTab(tab) {
+      document.getElementById('swipe-view').style.display = tab === 'home' ? 'flex' : 'none';
+      document.getElementById('matches-view').style.display = tab === 'matches' ? 'flex' : 'none';
+      document.getElementById('profile-view').style.display = tab === 'profile' ? 'flex' : 'none';
+
+      document.getElementById('nav-home').classList.toggle('active', tab === 'home');
+      document.getElementById('nav-matches').classList.toggle('active', tab === 'matches');
+      document.getElementById('profile-view').classList.toggle('active', tab === 'profile');
+    }
+
     function saveMyProfile() {
       const name = document.getElementById('my-input-name').value;
       const age = document.getElementById('my-input-age').value;
@@ -210,7 +251,6 @@
       switchTab('home');
     }
 
-    // Load Profile if exists
     function loadMyProfile() {
       const saved = localStorage.getItem('user_profile');
       if (saved) {
@@ -223,7 +263,6 @@
       }
     }
 
-    // Initialize App
     renderProfile();
     loadMyProfile();
   </script>
