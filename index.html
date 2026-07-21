@@ -189,33 +189,19 @@
     .nav-item { color: var(--subtext-color); font-size: 20px; cursor: pointer; }
     .nav-item.active { color: #6fb1fc; }
 
-    /* ==================== VIP MODAL STYLES ==================== */
+    /* VIP Modal Styles */
     .vip-modal-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(5px);
-      z-index: 100;
-      display: none;
-      justify-content: center;
-      align-items: flex-end;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);
+      z-index: 100; display: none; justify-content: center; align-items: flex-end;
     }
 
     .vip-modal-content {
-      width: 100%;
-      max-width: 420px;
-      max-height: 90vh;
-      background: var(--bg-color);
-      border-top-left-radius: 24px;
-      border-top-right-radius: 24px;
-      border: 1px solid var(--border-color);
-      padding: 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
-      animation: slideUp 0.3s ease-out;
+      width: 100%; max-width: 420px; max-height: 90vh;
+      background: var(--bg-color); border-top-left-radius: 24px; border-top-right-radius: 24px;
+      border: 1px solid var(--border-color); padding: 20px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 15px;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.8); animation: slideUp 0.3s ease-out;
     }
 
     @keyframes slideUp {
@@ -223,91 +209,45 @@
       to { transform: translateY(0); }
     }
 
-    .modal-top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 5px;
-    }
-
+    .modal-top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
     .close-modal-btn {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      color: var(--text-color);
-      width: 30px; height: 30px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 16px; font-weight: bold;
+      background: var(--card-bg); border: 1px solid var(--border-color);
+      color: var(--text-color); width: 30px; height: 30px; border-radius: 50%;
+      cursor: pointer; font-size: 16px; font-weight: bold;
     }
 
     .pkg-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 14px 18px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      transition: border-color 0.2s;
+      background: var(--card-bg); border: 1px solid var(--border-color);
+      border-radius: 16px; padding: 14px 18px; display: flex;
+      justify-content: space-between; align-items: center; cursor: pointer;
     }
-
-    .pkg-card.selected {
-      border: 2px solid var(--accent-red);
-    }
-
+    .pkg-card.selected { border: 2px solid var(--accent-red); }
     .pkg-info h4 { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
     .pkg-info p { font-size: 12px; color: var(--subtext-color); }
     .pkg-price { font-size: 18px; font-weight: 800; color: var(--accent-red); }
 
     .payment-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      background: var(--card-bg); border: 1px solid var(--border-color);
+      border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px;
     }
 
     .account-box {
-      background: var(--input-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 12px;
-      font-size: 13px;
-      line-height: 1.8;
+      background: var(--input-bg); border: 1px solid var(--border-color);
+      border-radius: 12px; padding: 12px; font-size: 13px; line-height: 1.8;
     }
 
     .upload-btn {
-      background: var(--input-bg);
-      border: 1px dashed var(--subtext-color);
-      color: var(--text-color);
-      padding: 12px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 600;
-      text-align: center;
-      cursor: pointer;
+      background: var(--input-bg); border: 1px dashed var(--subtext-color);
+      color: var(--text-color); padding: 12px; border-radius: 12px;
+      font-size: 13px; font-weight: 600; text-align: center; cursor: pointer;
     }
 
     .submit-btn {
-      background: var(--accent-red);
-      color: white;
-      border: none;
-      padding: 14px;
-      border-radius: 12px;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
+      background: var(--accent-red); color: white; border: none;
+      padding: 14px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer;
     }
 
-    .preview-ss {
-      max-height: 100px;
-      object-fit: contain;
-      border-radius: 8px;
-      display: none;
-    }
+    .preview-ss { max-height: 100px; object-fit: contain; border-radius: 8px; display: none; }
   </style>
 </head>
 <body>
@@ -331,7 +271,7 @@
       <div class="profile-card">
         <div class="card-img-container">
           <img id="profile-img" class="card-img" src="" alt="Profile" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png';">
-                  </div>
+        </div>
         <div class="card-info">
           <div style="font-size: 22px; font-weight: bold;" id="card-name">...</div>
           <div style="font-size: 13px; color: #6fb1fc; margin-top: 3px;" id="card-religion-zodiac">...</div>
@@ -434,6 +374,25 @@
         <input type="text" id="my-input-religion-manual" placeholder="Type your religion..." style="display: none; margin-top: 5px;">
       </div>
 
+      <!-- Zodiac Sign (የተጨመረው የኮከብ ምልክት) -->
+      <div class="form-group">
+        <label id="lbl-zodiac">Zodiac Sign</label>
+        <select id="my-input-zodiac">
+          <option value="Aries ♈" id="opt-z-aries">Aries ♈ (አሪየስ)</option>
+          <option value="Taurus ♉" id="opt-z-taurus">Taurus ♉ (ታውረስ)</option>
+          <option value="Gemini ♊" id="opt-z-gemini">Gemini ♊ (ጄሚኒ)</option>
+          <option value="Cancer ♋" id="opt-z-cancer">Cancer ♋ (ካንሰር)</option>
+          <option value="Leo ♌" id="opt-z-leo">Leo ♌ (ሊዮ)</option>
+          <option value="Virgo ♍" id="opt-z-virgo">Virgo ♍ (ቪርጎ)</option>
+          <option value="Libra ♎" id="opt-z-libra">Libra ♎ (ሊብራ)</option>
+          <option value="Scorpio ♏" id="opt-z-scorpio">Scorpio ♏ (ስኮርፒዮ)</option>
+          <option value="Sagittarius ♐" id="opt-z-sagittarius">Sagittarius ♐ (ሳጂታሪየስ)</option>
+          <option value="Capricorn ♑" id="opt-z-capricorn">Capricorn ♑ (ካፕሪኮርን)</option>
+          <option value="Aquarius ♒" id="opt-z-aquarius">Aquarius ♒ (አኳሪየስ)</option>
+          <option value="Pisces ♓" id="opt-z-pisces">Pisces ♓ (ፓይሰስ)</option>
+        </select>
+      </div>
+
       <!-- Photo -->
       <div class="form-group">
         <label id="lbl-photo">Choose Photo</label>
@@ -462,7 +421,7 @@
     <div class="nav-item active" id="nav-profile" onclick="switchTab('profile')">👤</div>
   </div>
 
-  <!-- ==================== VIP PACKAGES MODAL ==================== -->
+  <!-- VIP PACKAGES MODAL -->
   <div class="vip-modal-overlay" id="vip-modal">
     <div class="vip-modal-content">
       
@@ -473,7 +432,6 @@
 
       <h3 style="text-align: center; font-size: 18px;" id="txt-vip-main-title">የቪአይፒ ፓኬጅ ይምረጡ</h3>
 
-      <!-- Packages -->
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <div class="pkg-card" onclick="selectVIPPackage('1 Month (199 Birr)', '1 ወር (199 ብር)', this)">
           <div class="pkg-info">
@@ -508,7 +466,6 @@
         </div>
       </div>
 
-      <!-- Payment -->
       <div class="payment-card">
         <h4 style="font-size: 15px;" id="txt-pay-title">የአከፋፈል መመሪያ</h4>
         
@@ -526,7 +483,7 @@
           ክፍያውን ከፈጸሙ በኋላ የስክሪንሾት ፎቶውን እዚህ ያያይዙ፡
         </div>
 
-        <div class="upload-btn" onclick="document.getElementById('vip-ss-file').click()">
+        <div class="upload-btn" onclick="document.getElmentById('vip-ss-file').click()">
           📸 <span id="txt-select-btn">ስክሪንሾት ለመምረጥ እዚህ ይጫኑ</span>
         </div>
         <input type="file" id="vip-ss-file" accept="image/*" style="display:none;" onchange="handleVIPReceipt(event)">
@@ -575,6 +532,7 @@
         lblLookingFor: "የምፈልገው ፆታ",
         lblPrefAge: "የእድሜ ክልል",
         lblReligion: "ሃይማኖት",
+        lblZodiac: "የኮከብ ምልክት (Zodiac)",
         lblPhoto: "ፎቶ ይምረጡ",
         lblBio: "ስለ እኔ (Bio)",
         btnSave: "መዝግብ እና ጀምር 🎉",
@@ -623,6 +581,7 @@
         lblLookingFor: "Looking For",
         lblPrefAge: "Age Range Preference",
         lblReligion: "Religion",
+        lblZodiac: "Zodiac Sign",
         lblPhoto: "Choose Photo",
         lblBio: "About Me (Bio)",
         btnSave: "Save & Start 🎉",
@@ -662,16 +621,16 @@
     let currentLang = localStorage.getItem('app_lang') || 'am';
     let isLightMode = localStorage.getItem('app_light_mode') === 'true';
     let colorThemes = ['', 'theme-pink', 'theme-ocean'];
-    let currentThemeIdx = parseInt(localStorage.getItem('app_theme_idx') || '0')
+    let currentThemeIdx = parseInt(localStorage.getItem('app_theme_idx') || '0');
+
     const profiles = [
-      { id: 1, name: "ሀና፣ 22", bio: "አዲስ ሰዎችን ማወቅ እና ካፌዎችን መጎብኘት እወዳለሁ ☕✨", religion: "Orthodox", img: "https://images.pexels.com/photos/1382731/pexels-photo-1382731.jpeg?auto=compress&cs=tinysrgb&w=600", username: "telegram" },
-      { id: 2, name: "ዮናስ፣ 25", bio: "የቴክኖሎጂ እና የሙዚቃ አፍቃሪ 🎧💻", religion: "Protestant", img: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=600", username: "telegram" }
+      { id: 1, name: "ሀና፣ 22", bio: "አዲስ ሰዎችን ማወቅ እና ካፌዎችን መጎብኘት እወዳለሁ ☕✨", religion: "Orthodox", zodiac: "Aries ♈", img: "https://images.pexels.com/photos/1382731/pexels-photo-1382731.jpeg?auto=compress&cs=tinysrgb&w=600", username: "telegram" },
+      { id: 2, name: "ዮናስ፣ 25", bio: "የቴክኖሎጂ እና የሙዚቃ አፍቃሪ 🎧💻", religion: "Protestant", zodiac: "Leo ♌", img: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=600", username: "telegram" }
     ];
 
     let currentIndex = 0;
     let myMatches = [];
 
-    /* VIP Modal Handlers */
     function openVIPModal() {
       document.getElementById('vip-modal').style.display = 'flex';
     }
@@ -854,6 +813,7 @@
       document.getElementById('lbl-looking-for').innerText = t.lblLookingFor;
       document.getElementById('lbl-pref-age').innerText = t.lblPrefAge;
       document.getElementById('lbl-religion').innerText = t.lblReligion;
+      document.getElementById('lbl-zodiac').innerText = t.lblZodiac;
       document.getElementById('lbl-photo').innerText = t.lblPhoto;
       document.getElementById('lbl-bio').innerText = t.lblBio;
       document.getElementById('btn-save').innerText = isSaved ? t.btnSaveEdit : t.btnSave;
@@ -927,7 +887,7 @@
       const p = profiles[currentIndex];
       document.getElementById('profile-img').src = p.img;
       document.getElementById('card-name').innerText = p.name;
-      document.getElementById('card-religion-zodiac').innerText = `☦️ ${p.religion}`;
+      document.getElementById('card-religion-zodiac').innerText = `☦️ ${p.religion} | ${p.zodiac || ''}`;
       document.getElementById('card-bio').innerText = p.bio;
       updateLimitCountersUI();
     }
@@ -976,7 +936,7 @@
           <img src="${m.img}" class="match-img" alt="user" onerror="this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png'">
           <div>
             <div style="font-weight:bold; font-size:14px;">${m.name}</div>
-            <div style="font-size:11px; color:var(--subtext-color);">${m.religion}</div>
+            <div style="font-size:11px; color:var(--subtext-color);">${m.religion} • ${m.zodiac || ''}</div>
           </div>
           <button class="match-chat-btn" onclick="openChat('${m.username}')">Chat 💬</button>
         `;
@@ -1030,6 +990,7 @@
       let religionSelect = document.getElementById('my-input-religion').value;
       if (religionSelect === 'MANUAL') religionSelect = document.getElementById('my-input-religion-manual').value;
 
+      const zodiac = document.getElementById('my-input-zodiac').value;
       const bio = document.getElementById('my-input-bio').value;
 
       if (!name || !age) {
@@ -1040,7 +1001,7 @@
       const existingProfile = JSON.parse(localStorage.getItem('user_profile')) || {};
       const registeredAt = existingProfile.registeredAt || new Date().toISOString();
 
-      const userProfile = { name, age, gender, phone, location, lookingFor, prefAge, religion: religionSelect, photo: uploadedPhotoBase64, bio, registeredAt };
+      const userProfile = { name, age, gender, phone, location, lookingFor, prefAge, religion: religionSelect, zodiac, photo: uploadedPhotoBase64, bio, registeredAt };
       localStorage.setItem('user_profile', JSON.stringify(userProfile));
 
       tg.showAlert(currentLang === 'am' ? "እንኳን ደስ አለዎት! የ 3 ቀን ነፃ VIP አባልነት ተበርክቶልዎታል 🎉" : "Saved successfully! 3 Days Free VIP trial activated 🎉");
@@ -1059,6 +1020,7 @@
         document.getElementById('my-input-location').value = p.location || '';
         document.getElementById('my-pref-looking').value = p.lookingFor || 'Male';
         document.getElementById('my-pref-age').value = p.prefAge || '18-25';
+        document.getElementById('my-input-zodiac').value = p.zodiac || 'Aries ♈';
         document.getElementById('my-input-bio').value = p.bio || '';
         switchTab('home');
       } else {
