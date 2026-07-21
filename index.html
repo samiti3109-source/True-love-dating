@@ -2,54 +2,162 @@
 <html lang="am">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>True Love</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
-      background-color: #1a1a24;
-      color: white;
-      font-family: sans-serif;
-      text-align: center;
+      background-color: #0d0d12;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 100vh;
       padding: 20px;
     }
-    .card {
-      background: #252538;
-      border-radius: 15px;
+    .header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+    }
+    .logo {
+      font-size: 22px;
+      font-weight: bold;
+      color: #ff2a6d;
+    }
+    .profile-card {
+      width: 100%;
+      max-width: 340px;
+      height: 420px;
+      background: #181824;
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      border: 1px solid #2a2a3a;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .card-img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.85;
+    }
+    .card-info {
+      position: relative;
+      z-index: 2;
       padding: 20px;
+      background: linear-gradient(to top, rgba(13,13,18,0.95), transparent);
+    }
+    .user-name {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .user-bio {
+      font-size: 14px;
+      color: #b3b3b3;
+      margin-top: 5px;
+    }
+    .actions {
+      display: flex;
+      gap: 20px;
       margin-top: 20px;
+      margin-bottom: 20px;
     }
-    button {
-      background: #e91e63;
-      color: white;
+    .btn {
+      width: 65px;
+      height: 65px;
+      border-radius: 50%;
       border: none;
-      padding: 12px 24px;
-      font-size: 16px;
-      border-radius: 8px;
-      margin-top: 15px;
+      font-size: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .btn:active {
+      transform: scale(0.9);
+    }
+    .btn-dislike {
+      background: #252538;
+      color: #ff4757;
+      border: 2px solid #ff4757;
+    }
+    .btn-like {
+      background: linear-gradient(135deg, #ff2a6d, #ff5e62);
+      color: white;
+      box-shadow: 0 4px 15px rgba(255, 42, 109, 0.4);
     }
   </style>
 </head>
 <body>
-  <h1>❤️ True Love ❤️</h1>
-  <div class="card">
-    <h3 id="user-name">እንኳን ደህና መጣህ!</h3>
-    <p>አዲስ ሰዎችን ለማግኘት ከታች ያለውን ቁልፍ ተጫን።</p>
-    <button onclick="findMatch()">Match ፈልግ</button>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">❤️ True Love</div>
+    <div id="my-name" style="font-size: 14px; color: #888;"></div>
+  </div>
+
+  <!-- Profile Card -->
+  <div class="profile-card">
+    <img id="profile-img" class="card-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500" alt="Profile">
+    <div class="card-info">
+      <div class="user-name" id="card-name">ሀና፣ 22</div>
+      <div class="user-bio" id="card-bio">አዲስ ሰዎችን ማወቅ እና ካፌዎችን መጎብኘት እወዳለሁ ☕✨</div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="actions">
+    <button class="btn btn-dislike" onclick="nextProfile('pass')">✖</button>
+    <button class="btn btn-like" onclick="nextProfile('like')">❤️</button>
   </div>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
+    // የተጠቃሚውን ስም Header ላይ ማሳየት
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-      document.getElementById('user-name').innerText = "ሰላም " + tg.initDataUnsafe.user.first_name + " 👋";
+      document.getElementById('my-name').innerText = tg.initDataUnsafe.user.first_name;
     }
 
-    function findMatch() {
-      tg.showAlert("አዲስ Match እየተፈለገ ነው...");
+    // የናሙና ፕሮፋይሎች (Dummy Data)
+    const profiles = [
+      { name: "ሀና፣ 22", bio: "አዲስ ሰዎችን ማወቅ እና ካፌዎችን መጎብኘት እወዳለሁ ☕✨", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500" },
+      { name: "ዮናስ፣ 25", bio: "የቴክኖሎጂ እና የሙዚቃ አፍቃሪ 🎧💻", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500" },
+      { name: "ሰላም፣ 21", bio: "መጽሐፍ ማንበብ እና ጉዞ ደስታዬ ነው 📚✈️", img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500" }
+    ];
+
+    let currentIndex = 0;
+
+    function nextProfile(action) {
+      if (action === 'like') {
+        tg.HapticFeedback.impactOccurred('medium'); // ስልኩ እንዲንቀጠቀጥ (Vibrate) ማድረግ
+      }
+
+      currentIndex = (currentIndex + 1) % profiles.length;
+      const profile = profiles[currentIndex];
+
+      document.getElementById('profile-img').src = profile.img;
+      document.getElementById('card-name').innerText = profile.name;
+      document.getElementById('card-bio').innerText = profile.bio;
     }
   </script>
 </body>
-</html>
+  </html>
