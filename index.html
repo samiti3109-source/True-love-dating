@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>True Love</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      background-color: #1a1a24;
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    .card {
+      background: #252538;
+      border-radius: 15px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    button {
+      background: #e91e63;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>❤️ True Love ❤️</h1>
+  <div class="card">
+    <h3 id="user-name">እንኳን ደህና መጣህ!</h3>
+    <p>አዲስ ሰዎችን ለማግኘት ከታች ያለውን ቁልፍ ተጫን።</p>
+    <button onclick="findMatch()">Match ፈልግ</button>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+      document.getElementById('user-name').innerText = "ሰላም " + tg.initDataUnsafe.user.first_name + " 👋";
+    }
+
+    function findMatch() {
+      tg.showAlert("አዲስ Match እየተፈለገ ነው...");
+    }
+  </script>
+</body>
+</html>
