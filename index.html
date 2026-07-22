@@ -978,7 +978,8 @@
       document.getElementById('nav-profile').classList.toggle('active', tab === 'profile');
     }
 
-    function saveMyProfile() {
+function saveMyProfile() {
+    // Input ቫልዩዎችን መሰብሰብ
     const name = document.getElementById('my-input-name').value.trim();
     const age = document.getElementById('my-input-age').value.trim();
     const gender = document.getElementById('my-input-gender').value;
@@ -989,37 +990,46 @@
 
     let religionSelect = document.getElementById('my-input-religion').value;
     if (religionSelect === 'MANUAL') {
-        religionSelect = document.getElementById('my-input-religion-custom') ? document.getElementById('my-input-religion-custom').value.trim() : '';
+        const customRel = document.getElementById('my-input-religion-custom');
+        religionSelect = customRel ? customRel.value.trim() : '';
     }
 
     const zodiac = document.getElementById('my-input-zodiac').value;
     const bio = document.getElementById('my-input-bio').value.trim();
-// 1. ⚠️ Validation Check (ስም፣ እድሜ፣ ስልክ፣ ቦታ እና Bio ካልተሞሉ ይከለክላል)
+
+    // 1. ⚠️ Validation Check (ስም፣ እድሜ፣ ስልክ፣ ቦታ እና Bio ካልተሞሉ እንዳያልፍ ይከለክላል)
     if (!name || !age || !bio || !phone || !location) {
         tg.showAlert(currentLang === 'am' ? 'እባክዎን ስም፣ እድሜ፣ ስልክ ቁጥር፣ ቦታ እና Bio በትክክል ይሙሉ!' : 'Please fill name, age, phone, location, and bio!');
         return;
     }
-    // 2. በስልክ/Browser ላይ መረጃውን ሴቭ ማድረግ
-    const existingProfile = JSON.parse(localStorage.getItem('user_profile')) || {};
-    const registeredAt = existingProfile.registeredAt || new Date().toISOString();
 
+    // 2. መረጃውን በአንድ Object ማዘጋጀት
     const userProfile = { 
-        name, age, gender, phone, location, lookingFor, prefAge, 
-        religion: religionSelect, zodiac, bio, registeredAt 
+        action: "save_profile",
+        name: name, 
+        age: age, 
+        gender: gender, 
+        phone: phone, 
+        location: location, 
+        lookingFor: lookingFor, 
+        prefAge: prefAge, 
+        religion: religionSelect, 
+        zodiac: zodiac, 
+        bio: bio 
     };
-    
-    // በ LocalStorage ሴቭ ማድረግ (ስልኩ ላይ እንዳይጠፋ)
+
+    // 3. በ LocalStorage ሴቭ ማድረግ (ስልኩ ላይ እንዳይጠፋ)
     localStorage.setItem('user_profile', JSON.stringify(userProfile));
 
-    // 3. 🚀 መረጃውን ወደ Telegram Bot (Python backend) መላክ
+    // 4. 🚀 መረጃውን ወደ Telegram Bot (Python Backend) መላክ
     if (window.Telegram && window.Telegram.WebApp) {
-        userProfile.action = "save_profile";
-        tg.sendData(JSON.stringify(userProfile));
+        window.Telegram.WebApp.sendData(JSON.stringify(userProfile));
     }
 
-    tg.showAlert(currentLang === 'am' ? 'እንኳን ደስ አለዎት! የ 3 ቀን ነፃ VIP አባልነት ተበርክቶልዎታል 🎉' : 'Saved Successfully!');
+    tg.showAlert(currentLang === 'am' ? 'ፕሮፋይልዎ በስኬት ተቀምጧል! 🎉' : 'Saved Successfully!');
     applyLanguage();
     switchTab('home');
+}
                                                  }
       const existingProfile = JSON.parse(localStorage.getItem('user_profile')) || {};
 
