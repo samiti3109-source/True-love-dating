@@ -4,6 +4,7 @@ import base64
 import binascii
 import sqlite3
 import threading
+from datetime import datetime, timezone
 from io import BytesIO
 from flask import Flask, send_from_directory, request, jsonify, abort
 import telebot
@@ -94,10 +95,18 @@ def init_db():
                 zodiac TEXT,
                 bio TEXT,
                 photo_base64 TEXT,
+                is_vip INTEGER DEFAULT 0,
                 registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """
         )
+        # Migration: CREATE TABLE IF NOT EXISTS above won't add new columns
+        # to a users table that already existed before is_vip was introduced.
+        cursor.execute("PRAGMA table_info(users)")
+        existing_cols = {row[1] for row in cursor.fetchall()}
+        if "is_vip" not in existing_cols:
+            cursor.execute("ALTER TABLE users ADD COLUMN is_vip INTEGER DEFAULT 0")
+
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS vip_requests (
@@ -107,6 +116,18 @@ def init_db():
                 photo_base64 TEXT,
                 status TEXT DEFAULT 'pending',
                 submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                reporter_id INTEGER,
+                reported_user TEXT,
+                reason TEXT,
+                status TEXT DEFAULT 'open',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """
         )
@@ -255,6 +276,7 @@ def submit_vip_receipt():
             "INSERT INTO vip_requests (user_id, package, photo_base64) VALUES (?, ?, ?)",
             (user_id, package, photo_b64),
         )
+        request_id = cursor.lastrowid
         conn.commit()
     except Exception as e:
         print(f"submit_vip_receipt DB error: {e}")
@@ -262,22 +284,43 @@ def submit_vip_receipt():
     finally:
         conn.close()
 
-    # 2. Forward the screenshot to the admin so it can actually be reviewed.
+    # 2. Forward the screenshot to the admin so it can actually be reviewed,
+    # with inline Approve/Reject buttons wired to the request id above.
     if not ADMIN_CHAT_ID:
         print("ADMIN_CHAT_ID is not set - VIP receipt was saved but NOT forwarded to an admin.")
         # Still return ok: the record is saved, it just wasn't pushed to Telegram yet.
         return jsonify({"ok": True, "warning": "admin not configured"})
 
+    # Best-effort lookup of the user's display name / username for the
+    # admin message. Not fatal if it fails - we still have the user_id.
+    display_name = str(user_id)
+    username = ""
     try:
-        bot.send_photo(
-            ADMIN_CHAT_ID,
-            BytesIO(raw),
-            caption=(
-                f"👑 New VIP payment receipt\n"
-                f"User ID: {user_id}\n"
-                f"Package: {package}"
-            ),
-        )
+        chat = bot.get_chat(user_id)
+        if chat.first_name:
+            display_name = chat.first_name
+            if chat.last_name:
+                display_name += f" {chat.last_name}"
+        username = chat.username or ""
+    except Exception as e:
+        print(f"submit_vip_receipt get_chat error: {e}")
+
+    markup = InlineKeyboardMarkup()
+    markup.add(
+        InlineKeyboardButton("✅ Approve VIP", callback_data=f"vip_approve:{request_id}"),
+        InlineKeyboardButton("❌ Reject VIP", callback_data=f"vip_reject:{request_id}"),
+    )
+
+    caption = (
+        f"👑 New VIP payment receipt\n"
+        f"Name: {display_name}\n"
+        f"Telegram ID: {user_id}\n"
+        f"Username: {'@' + username if username else 'N/A'}\n"
+        f"Package: {package}"
+    )
+
+    try:
+        bot.send_photo(ADMIN_CHAT_ID, BytesIO(raw), caption=caption, reply_markup=markup)
     except Exception as e:
         print(f"submit_vip_receipt admin notify error: {e}")
         # The record is already saved in vip_requests, so this isn't fatal -
@@ -285,6 +328,74 @@ def submit_vip_receipt():
         return jsonify({"ok": True, "warning": "saved but admin notification failed"})
 
     return jsonify({"ok": True})
+
+
+# 4a3. VIP APPROVE/REJECT CALLBACK -------------------------------------------
+# Handles taps on the "✅ Approve VIP" / "❌ Reject VIP" buttons attached to
+# the admin notification above. Flips users.is_vip and tells the user.
+@bot.callback_query_handler(
+    func=lambda call: call.data and call.data.startswith(("vip_approve:", "vip_reject:"))
+)
+def handle_vip_decision(call):
+    action, _, request_id_str = call.data.partition(":")
+    try:
+        request_id = int(request_id_str)
+    except ValueError:
+        bot.answer_callback_query(call.id, "Invalid request id")
+        return
+
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT user_id, status FROM vip_requests WHERE id = ?", (request_id,))
+        row = cursor.fetchone()
+        if not row:
+            bot.answer_callback_query(call.id, "Request not found")
+            return
+
+        target_user_id, status = row
+        if status != "pending":
+            bot.answer_callback_query(call.id, f"Already {status}")
+            return
+
+        new_status = "approved" if action == "vip_approve" else "rejected"
+        cursor.execute("UPDATE vip_requests SET status = ? WHERE id = ?", (new_status, request_id))
+        if new_status == "approved":
+            cursor.execute(
+                "INSERT INTO users (user_id, is_vip) VALUES (?, 1) "
+                "ON CONFLICT(user_id) DO UPDATE SET is_vip = 1",
+                (target_user_id,),
+            )
+        conn.commit()
+    except Exception as e:
+        print(f"handle_vip_decision DB error: {e}")
+        bot.answer_callback_query(call.id, "Server error")
+        return
+    finally:
+        conn.close()
+
+    if new_status == "approved":
+        user_message = "🎉 Congratulations! Your VIP membership has been approved."
+        admin_note = "✅ Approved"
+    else:
+        user_message = "❌ Your payment could not be verified. Please upload a clear payment screenshot."
+        admin_note = "❌ Rejected"
+
+    try:
+        bot.send_message(target_user_id, user_message)
+    except Exception as e:
+        print(f"handle_vip_decision notify error: {e}")
+
+    try:
+        bot.answer_callback_query(call.id, admin_note)
+        original_caption = call.message.caption or ""
+        bot.edit_message_caption(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            caption=f"{original_caption}\n\n{admin_note}",
+        )
+    except Exception as e:
+        print(f"handle_vip_decision UI update error: {e}")
 
 
 # 4b. SAVE PROFILE ENDPOINT (replaces tg.sendData() for the text fields) ---
@@ -383,7 +494,7 @@ def save_profile():
 # local storage happens to be cached on.
 PROFILE_COLUMNS = [
     "name", "age", "gender", "phone", "location",
-    "looking_for", "pref_age", "religion", "zodiac", "bio",
+    "looking_for", "pref_age", "religion", "zodiac", "bio", "is_vip",
 ]
 
 
@@ -405,8 +516,88 @@ def get_profile(user_id):
         return jsonify({"ok": True, "exists": False})
 
     profile = dict(zip(PROFILE_COLUMNS, row[:-1]))
+    profile["is_vip"] = bool(profile["is_vip"])
     profile["hasPhoto"] = bool(row[-1])
     return jsonify({"ok": True, "exists": True, "profile": profile})
+
+
+# 6. REPORT ENDPOINT ---------------------------------------------------------
+# Lets the frontend flag a profile as fake/spam/harassment/etc. The report
+# is saved permanently and also pushed to the admin for quick review.
+@app.route("/report", methods=["POST", "OPTIONS"])
+def submit_report():
+    if request.method == "OPTIONS":
+        return "", 204
+
+    payload = request.get_json(silent=True) or {}
+    reporter_id = payload.get("reporter_id")
+    reported_user = payload.get("reported_user")
+    reason = payload.get("reason")
+
+    if not reporter_id or not reported_user or not reason:
+        return jsonify({"ok": False, "error": "reporter_id, reported_user and reason are required"}), 400
+
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO reports (reporter_id, reported_user, reason) VALUES (?, ?, ?)",
+            (reporter_id, str(reported_user), reason),
+        )
+        conn.commit()
+    except Exception as e:
+        print(f"submit_report DB error: {e}")
+        return jsonify({"ok": False, "error": "database error"}), 500
+    finally:
+        conn.close()
+
+    if ADMIN_CHAT_ID:
+        try:
+            bot.send_message(
+                ADMIN_CHAT_ID,
+                "🚩 New report\n"
+                f"Reporter: {reporter_id}\n"
+                f"Reported user: {reported_user}\n"
+                f"Reason: {reason}\n"
+                f"Time: {datetime.now(timezone.utc).isoformat(timespec='seconds')} UTC",
+      )
+        except Exception as e:
+            print(f"submit_report admin notify error: {e}")
+
+    return jsonify({"ok": True})
+
+
+# 7. ADMIN REPORTS COMMAND ---------------------------------------------------
+# A lightweight "Admin Reports page": the admin sends /reports in their
+# chat with the bot and gets the most recent reports listed back.
+@bot.message_handler(commands=["reports"])
+def list_reports(message):
+    if not ADMIN_CHAT_ID or str(message.chat.id) != str(ADMIN_CHAT_ID):
+        return  # silently ignore - reports are admin-only
+
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id, reporter_id, reported_user, reason, status, created_at "
+            "FROM reports ORDER BY created_at DESC LIMIT 20"
+        )
+        rows = cursor.fetchall()
+    finally:
+        conn.close()
+
+    if not rows:
+        bot.reply_to(message, "No reports yet.")
+        return
+
+    lines = ["🚩 Recent reports (latest 20):\n"]
+    for r_id, reporter_id, reported_user, reason, status, created_at in rows:
+        lines.append(
+            f"#{r_id} [{status}] {created_at}\n"
+            f"Reporter: {reporter_id} → Reported: {reported_user}\n"
+            f"Reason: {reason}\n"
+        )
+    bot.reply_to(message, "\n".join(lines))
 
 
 def run_flask():
