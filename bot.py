@@ -1,17 +1,28 @@
 import os
 import json
 import sqlite3
+import threading
+from flask import Flask, send_from_directory
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
 # 1. BOT TOKEN እና URL ማዘጋጀት
-# Render ላይ ከሆንክ የ ENVIRONMENT VARIABLE መጠቀም ትችላለህ ወይም ቀጥታ Token አስገባ
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN_HERE")
-WEB_APP_URL = "https://true-love-dating.onrender.com"  # Render የሚሰጥህ የራሱ URL
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8959392899:AAG1hIoDIuktlazViTtd-EZ3qbw-CiuLSAk")
+WEB_APP_URL = "https://true-love-dating.onrender.com"
 
 bot = telebot.TeleBot(BOT_TOKEN)
+app = Flask(__name__, static_folder='.')
 
-# 2. SQLite3 DATABASE ማዘጋጀት (ከሌለ በራሱ ይፈጥራል)
+# 2. FLASK SERVER (Render እንዳይዘጋው የሚያደርግ)
+@app.route('/')
+def home():
+    return "True Love Bot is Running Live!"
+
+@app.route('/<path:path>')
+def serve_static(path):
+    return send_from_directory('.', path)
+
+# 3. DATABASE ማዘጋጀት
 def init_db():
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
@@ -34,14 +45,12 @@ def init_db():
     conn.commit()
     conn.close()
 
-# ቦቱ ሲነሳ ዳታቤዙ እንዲዘጋጅ ማድረግ
 init_db()
 
-# 3. /start COMMAND HANDLER
+# 4. /start COMMAND
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     markup = InlineKeyboardMarkup()
-    # Mini App የሚከፍተው Button
     web_app_btn = InlineKeyboardButton(
         text="❤️ Open True Love App", 
         web_app=WebAppInfo(url=WEB_APP_URL)
@@ -50,22 +59,19 @@ def send_welcome(message):
     
     bot.reply_to(
         message, 
-        f"ሰላም {message.from_user.first_name}! እንኳን ወደ **True Love** በደህና መጡ።\n\nታች ያለውን ቁልፍ በመጫን ፕሮፋይልዎን ያስተካክሉ፡", 
-        reply_markup=markup,
-        parse_mode="Markdown"
+        f"ሰላም {message.from_user.first_name}! እንኳን ወደ True Love በደህና መጡ።\n\nታች ያለውን ቁልፍ በመጫን አፑን ይክፈቱ፡", 
+        reply_markup=markup
     )
 
-# 4. WEB APP DATA HANDLER (ከ Mini App የሚመጣውን Profile የመቀበያ ቦታ)
+# 5. WEB APP DATA HANDLER (Profile Save ማድረጊያ)
 @bot.message_handler(content_types=['web_app_data'])
 def handle_web_app_data(message):
     try:
-        # ከ WebApp የመጣውን JSON ማወቅ
         data = json.loads(message.web_app_data.data)
         
         if data.get('action') == 'save_profile':
             user_id = message.from_user.id
             
-            # መረጃውን ዳታቤዝ ውስጥ ማስገባት
             conn = sqlite3.connect('database.db')
             cursor = conn.cursor()
             
@@ -90,23 +96,28 @@ def handle_web_app_data(message):
             conn.commit()
             conn.close()
             
-            # ለተጠቃሚው በቴሌግራም የማረጋገጫ መልእክት መላክ
             bot.send_message(
                 message.chat.id, 
                 f"🎉 **ፕሮፋይልዎ በስኬት ተቀምጧል!**\n\n"
                 f"👤 **ስም:** {data.get('name')}\n"
                 f"🎂 **እድሜ:** {data.get('age')}\n"
                 f"📱 **ስልክ:** {data.get('phone')}\n"
-                f"📍 **ቦታ:** {data.get('location')}\n"
-                f"📝 **Bio:** {data.get('bio')}",
+                f"📍 **ቦታ:** {data.get('location')}",
                 parse_mode="Markdown"
             )
             
     except Exception as e:
-        print(f"Error handling web_app_data: {e}")
-        bot.send_message(message.chat.id, "❌ ፕሮፋይል ሲቀመጥ ስህተት ተፈጥሯል፣ እባክዎ እንደገና ይሞክሩ።")
+        print(f"Error: {e}")
+        bot.send_message(message.chat.id, "❌ መረጃውን ማስቀመጥ አልተቻለም።")
 
-# 5. BOT RUNNING
+# 6. FLASK እና BOT በአንድ ላይ ማስነሳት
+def run_flask():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
 if __name__ == '__main__':
+    # Flask ን በ Background ማሰራት
+    threading.Thread(target=run_flask).start()
     print("True Love Bot is running...")
+    # Bot ን ማሰራት
     bot.infinity_polling(skip_pending=True)
