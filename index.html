@@ -994,13 +994,11 @@
 
     const zodiac = document.getElementById('my-input-zodiac').value;
     const bio = document.getElementById('my-input-bio').value.trim();
-
-    // 1. ⚠️ Check Validation (ስም፣ እድሜ እና Bio ካልተሞላ እንዳያልፍ ይከለክላል)
-    if (!name || !age || !bio) {
-        tg.showAlert(currentLang === 'am' ? 'እባክዎን ስም፣ እድሜ እና ስለ እኔ (Bio) የሚሉትን መረጃዎች በትክክል ይሙሉ!' : 'Please fill name, age, and bio!');
+// 1. ⚠️ Validation Check (ስም፣ እድሜ፣ ስልክ፣ ቦታ እና Bio ካልተሞሉ ይከለክላል)
+    if (!name || !age || !bio || !phone || !location) {
+        tg.showAlert(currentLang === 'am' ? 'እባክዎን ስም፣ እድሜ፣ ስልክ ቁጥር፣ ቦታ እና Bio በትክክል ይሙሉ!' : 'Please fill name, age, phone, location, and bio!');
         return;
     }
-
     // 2. በስልክ/Browser ላይ መረጃውን ሴቭ ማድረግ
     const existingProfile = JSON.parse(localStorage.getItem('user_profile')) || {};
     const registeredAt = existingProfile.registeredAt || new Date().toISOString();
