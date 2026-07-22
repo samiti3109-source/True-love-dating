@@ -483,7 +483,7 @@
           ክፍያውን ከፈጸሙ በኋላ የስክሪንሾት ፎቶውን እዚህ ያያይዙ፡
         </div>
 
-        <div class="upload-btn" onclick="document.getElmentById('vip-ss-file').click()">
+        <div class="upload-btn" onclick="document.getElementById('vip-ss-file').click()">
           📸 <span id="txt-select-btn">ስክሪንሾት ለመምረጥ እዚህ ይጫኑ</span>
         </div>
         <input type="file" id="vip-ss-file" accept="image/*" style="display:none;" onchange="handleVIPReceipt(event)">
@@ -501,11 +501,19 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
+    // This page is hosted on GitHub Pages, separate from the Flask/bot
+    // backend. Telegram's tg.sendData() is capped at 4096 bytes, which a
+    // base64 photo will always exceed, so the photo is uploaded straight
+    // to the backend over HTTP instead. Point this at your deployed
+    // backend URL (e.g. your Render service), with no trailing slash.
+    const BACKEND_URL = "https://YOUR-BACKEND-URL.onrender.com";
+
     const FREE_DAILY_PROFILE_LIMIT = 25;
     const FREE_DAILY_CHAT_LIMIT = 10;
     const VIP_TRIAL_DAYS = 3; 
 
     let uploadedPhotoBase64 = "";
+    let selectedPhotoFile = null;
     let selectedVIPPkgEn = "6 Months (899 Birr)";
     let selectedVIPPkgAm = "6 ወር (899 ብር)";
 
@@ -754,16 +762,42 @@
 
     function handleFileSelect(e) {
       const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          uploadedPhotoBase64 = evt.target.result;
-          const preview = document.getElementById('my-photo-preview');
-          preview.src = uploadedPhotoBase64;
-          preview.style.display = 'block';
-          document.getElementById('txt-file-status').innerText = "✅ " + file.name;
-        };
-        reader.readAsDataURL(file);
+      if (!file) return;
+
+      const MAX_BYTES = 2 * 1024 * 1024; // 2MB, matches backend limit
+      if (file.size > MAX_BYTES) {
+        tg.showAlert(currentLang === 'am' ? "ፎቶው በጣም ትልቅ ነው (ከ2MB በታች ይምረጡ)" : "That photo is too large (please choose one under 2MB).");
+        e.target.value = "";
+        return;
+      }
+
+      selectedPhotoFile = file;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        uploadedPhotoBase64 = evt.target.result;
+        const preview = document.getElementById('my-photo-preview');
+        preview.src = uploadedPhotoBase64;
+        preview.style.display = 'block';
+        document.getElementById('txt-file-status').innerText = "✅ " + file.name;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Uploads the photo directly to the Flask backend (bypasses the
+    // 4096-byte cap on tg.sendData()). Returns true on success.
+    async function uploadPhotoToServer(userId) {
+      if (!selectedPhotoFile || !uploadedPhotoBase64) return true; // nothing to upload
+      try {
+        const res = await fetch(`${BACKEND_URL}/upload_photo`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId, photo_base64: uploadedPhotoBase64 })
+        });
+        const result = await res.json().catch(() => ({}));
+        return res.ok && result.ok;
+      } catch (err) {
+        console.error('Photo upload failed:', err);
+        return false;
       }
     }
 
@@ -963,18 +997,22 @@
     }
 
     function switchTab(tab) {
-    // ታቦችን መለዋወጫ (ሳይዘጋ ቀጥታ እንዲቀይር)
-    document.getElementById('swipe-view').style.display = tab === 'home' ? 'flex' : 'none';
-    document.getElementById('matches-view').style.display = tab === 'matches' ? 'flex' : 'none';
-    document.getElementById('profile-view').style.display = tab === 'profile' ? 'flex' : 'none';
+      const isSaved = localStorage.getItem('user_profile') !== null;
+      if (!isSaved && (tab === 'home' || tab === 'matches')) {
+        tg.showAlert(currentLang === 'am' ? "እባክዎን መጀመሪያ ፕሮፋይልዎን ይመዝግቡ!" : "Please register your profile first!");
+        tab = 'profile';
+      }
 
-    // አክቲቭ የሆኑትን ቁልፎች ማብራት/ማጥፋት
-    document.getElementById('nav-home').classList.toggle('active', tab === 'home');
-    document.getElementById('nav-matches').classList.toggle('active', tab === 'matches');
-    document.getElementById('profile-view') ? document.getElementById('nav-profile').classList.toggle('active', tab === 'profile') : null;
-}
+      document.getElementById('swipe-view').style.display = tab === 'home' ? 'flex' : 'none';
+      document.getElementById('matches-view').style.display = tab === 'matches' ? 'flex' : 'none';
+      document.getElementById('profile-view').style.display = tab === 'profile' ? 'flex' : 'none';
 
-function saveMyProfile() {
+      document.getElementById('nav-home').classList.toggle('active', tab === 'home');
+      document.getElementById('nav-matches').classList.toggle('active', tab === 'matches');
+      document.getElementById('nav-profile').classList.toggle('active', tab === 'profile');
+    }
+
+async function saveMyProfile() {
     // Input ቫልዩዎችን መሰብሰብ
     const name = document.getElementById('my-input-name').value.trim();
     const age = document.getElementById('my-input-age').value.trim();
@@ -986,53 +1024,69 @@ function saveMyProfile() {
 
     let religionSelect = document.getElementById('my-input-religion').value;
     if (religionSelect === 'MANUAL') {
-        const customRel = document.getElementById('my-input-religion-custom');
+        const customRel = document.getElementById('my-input-religion-manual');
         religionSelect = customRel ? customRel.value.trim() : '';
     }
 
     const zodiac = document.getElementById('my-input-zodiac').value;
     const bio = document.getElementById('my-input-bio').value.trim();
 
-    // 1. ⚠️ በትክክል ማረጋገጥ
+    // 1. ⚠️ Validation Check (ስም፣ እድሜ፣ ስልክ፣ ቦታ እና Bio ካልተሞሉ እንዳያልፍ ይከለክላል)
     if (!name || !age || !bio || !phone || !location) {
         tg.showAlert(currentLang === 'am' ? 'እባክዎን ስም፣ እድሜ፣ ስልክ ቁጥር፣ ቦታ እና Bio በትክክል ይሙሉ!' : 'Please fill name, age, phone, location, and bio!');
         return;
-  }
-    // 2. መረጃውን በአንድ Object ማዘጋጀት
-    const userProfile = { 
+    }
+
+    const userId = tg.initDataUnsafe?.user?.id;
+
+    // 2. 📸 Upload the photo directly to the backend first (tg.sendData()
+    // cannot carry a base64 photo - it is capped at 4096 bytes).
+    const saveBtn = document.getElementById('btn-save');
+    if (selectedPhotoFile) {
+        if (!userId) {
+            tg.showAlert(currentLang === 'am' ? 'የፎቶ መስቀያ ስራ ላይ ለማዋል ይህን ገጽ በቴሌግራም ውስጥ ይክፈቱ።' : 'Open this inside Telegram to upload a photo.');
+        } else {
+            saveBtn.disabled = true;
+            const originalLabel = saveBtn.innerText;
+            saveBtn.innerText = currentLang === 'am' ? 'ፎቶ በመላክ ላይ...' : 'Uploading photo...';
+            const uploaded = await uploadPhotoToServer(userId);
+            saveBtn.disabled = false;
+            saveBtn.innerText = originalLabel;
+            if (!uploaded) {
+                tg.showAlert(currentLang === 'am' ? '⚠️ ፎቶውን መላክ አልተቻለም፣ የተቀሩት መረጃዎች ግን ይቀመጣሉ።' : '⚠️ Could not upload the photo, but the rest of your profile will still be saved.');
+            }
+        }
+    }
+
+    // 3. መረጃውን በአንድ Object ማዘጋጀት (ፎቶው ራሱ ወደ ባክኤንድ ተልኳል፣ እዚህ ግን ፎቶ አለ የሚል ምልክት ብቻ ይያዛል)
+    const userProfile = {
         action: "save_profile",
-        name: name, 
-        age: age, 
-        gender: gender, 
-        phone: phone, 
-        location: location, 
-        lookingFor: lookingFor, 
-        prefAge: prefAge, 
-        religion: religionSelect, 
-        zodiac: zodiac, 
-        bio: bio 
+        name: name,
+        age: age,
+        gender: gender,
+        phone: phone,
+        location: location,
+        lookingFor: lookingFor,
+        prefAge: prefAge,
+        religion: religionSelect,
+        zodiac: zodiac,
+        bio: bio,
+        hasPhoto: !!selectedPhotoFile,
+        registeredAt: new Date().toISOString()
     };
 
-    // 3. በ LocalStorage ሴቭ ማድረግ (ስልክ ላይ እንዲቀመጥ)
-    localStorage.setItem('user_profile', JSON.stringify(userProfile));
+    // 4. በ LocalStorage ሴቭ ማድረግ (ስልኩ ላይ እንዳይጠፋ) - ፎቶውንም ጨምሮ ለ UI ፕሪቪው ብቻ
+    localStorage.setItem('user_profile', JSON.stringify({ ...userProfile, photo: uploadedPhotoBase64 }));
 
-    // 4. 🔥 መረጃውን ወደ Telegram Bot መላክ (ይህች ካልኖረች Save አይልም!)
+    // 5. 🚀 የጽሑፍ መረጃውን ወደ Telegram Bot (Python Backend) መላክ
     if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.sendData(JSON.stringify(userProfile));
-        window.Telegram.WebApp.showAlert(
-            currentLang === 'am' ? 'ፕሮፋይልዎ በስኬት ተቀምጧል! 🎉' : 'Profile saved successfully! 🎉'
-        );
-    } else {
-        alert('ፕሮፋይልዎ በስኬት ተቀምጧል!');
     }
-}
+
     tg.showAlert(currentLang === 'am' ? 'ፕሮፋይልዎ በስኬት ተቀምጧል! 🎉' : 'Saved Successfully!');
     applyLanguage();
     switchTab('home');
 }
-                                                 }
-      const existingProfile = JSON.parse(localStorage.getItem('user_profile')) || {};
-
 
     function loadMyProfile() {
       const saved = localStorage.getItem('user_profile');
@@ -1047,6 +1101,12 @@ function saveMyProfile() {
         document.getElementById('my-pref-age').value = p.prefAge || '18-25';
         document.getElementById('my-input-zodiac').value = p.zodiac || 'Aries ♈';
         document.getElementById('my-input-bio').value = p.bio || '';
+        if (p.photo) {
+          uploadedPhotoBase64 = p.photo;
+          const preview = document.getElementById('my-photo-preview');
+          preview.src = p.photo;
+          preview.style.display = 'block';
+        }
         switchTab('home');
       } else {
         switchTab('profile');
@@ -1061,3 +1121,4 @@ function saveMyProfile() {
   </script>
 </body>
 </html>
+  
