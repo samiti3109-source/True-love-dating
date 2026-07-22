@@ -963,20 +963,16 @@
     }
 
     function switchTab(tab) {
-      const isSaved = localStorage.getItem('user_profile') !== null;
-      if (!isSaved && (tab === 'home' || tab === 'matches')) {
-        tg.showAlert(currentLang === 'am' ? "እባክዎን መጀመሪያ ፕሮፋይልዎን ይመዝግቡ!" : "Please register your profile first!");
-        tab = 'profile';
-      }
+    // ታቦችን መለዋወጫ (ሳይዘጋ ቀጥታ እንዲቀይር)
+    document.getElementById('swipe-view').style.display = tab === 'home' ? 'flex' : 'none';
+    document.getElementById('matches-view').style.display = tab === 'matches' ? 'flex' : 'none';
+    document.getElementById('profile-view').style.display = tab === 'profile' ? 'flex' : 'none';
 
-      document.getElementById('swipe-view').style.display = tab === 'home' ? 'flex' : 'none';
-      document.getElementById('matches-view').style.display = tab === 'matches' ? 'flex' : 'none';
-      document.getElementById('profile-view').style.display = tab === 'profile' ? 'flex' : 'none';
-
-      document.getElementById('nav-home').classList.toggle('active', tab === 'home');
-      document.getElementById('nav-matches').classList.toggle('active', tab === 'matches');
-      document.getElementById('nav-profile').classList.toggle('active', tab === 'profile');
-    }
+    // አክቲቭ የሆኑትን ቁልፎች ማብራት/ማጥፋት
+    document.getElementById('nav-home').classList.toggle('active', tab === 'home');
+    document.getElementById('nav-matches').classList.toggle('active', tab === 'matches');
+    document.getElementById('profile-view') ? document.getElementById('nav-profile').classList.toggle('active', tab === 'profile') : null;
+}
 
 function saveMyProfile() {
     // Input ቫልዩዎችን መሰብሰብ
@@ -997,12 +993,11 @@ function saveMyProfile() {
     const zodiac = document.getElementById('my-input-zodiac').value;
     const bio = document.getElementById('my-input-bio').value.trim();
 
-    // 1. ⚠️ Validation Check (ስም፣ እድሜ፣ ስልክ፣ ቦታ እና Bio ካልተሞሉ እንዳያልፍ ይከለክላል)
+    // 1. ⚠️ በትክክል ማረጋገጥ
     if (!name || !age || !bio || !phone || !location) {
         tg.showAlert(currentLang === 'am' ? 'እባክዎን ስም፣ እድሜ፣ ስልክ ቁጥር፣ ቦታ እና Bio በትክክል ይሙሉ!' : 'Please fill name, age, phone, location, and bio!');
         return;
-    }
-
+  }
     // 2. መረጃውን በአንድ Object ማዘጋጀት
     const userProfile = { 
         action: "save_profile",
