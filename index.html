@@ -979,35 +979,52 @@
     }
 
     function saveMyProfile() {
-      const name = document.getElementById('my-input-name').value;
-      const age = document.getElementById('my-input-age').value;
-      const gender = document.getElementById('my-input-gender').value;
-      const phone = document.getElementById('my-input-phone').value;
-      const location = document.getElementById('my-input-location').value;
-      const lookingFor = document.getElementById('my-pref-looking').value;
-      const prefAge = document.getElementById('my-pref-age').value;
-      
-      let religionSelect = document.getElementById('my-input-religion').value;
-      if (religionSelect === 'MANUAL') religionSelect = document.getElementById('my-input-religion-manual').value;
+    const name = document.getElementById('my-input-name').value.trim();
+    const age = document.getElementById('my-input-age').value.trim();
+    const gender = document.getElementById('my-input-gender').value;
+    const phone = document.getElementById('my-input-phone').value.trim();
+    const location = document.getElementById('my-input-location').value.trim();
+    const lookingFor = document.getElementById('my-pref-looking').value;
+    const prefAge = document.getElementById('my-pref-age').value;
 
-      const zodiac = document.getElementById('my-input-zodiac').value;
-      const bio = document.getElementById('my-input-bio').value;
-
-      if (!name || !age) {
-        tg.showAlert(currentLang === 'am' ? "እባክዎን ስም እና ዕድሜ ያስገቡ!" : "Please fill name and age!");
-        return;
-      }
-
-      const existingProfile = JSON.parse(localStorage.getItem('user_profile')) || {};
-      const registeredAt = existingProfile.registeredAt || new Date().toISOString();
-
-      const userProfile = { name, age, gender, phone, location, lookingFor, prefAge, religion: religionSelect, zodiac, photo: uploadedPhotoBase64, bio, registeredAt };
-      localStorage.setItem('user_profile', JSON.stringify(userProfile));
-
-      tg.showAlert(currentLang === 'am' ? "እንኳን ደስ አለዎት! የ 3 ቀን ነፃ VIP አባልነት ተበርክቶልዎታል 🎉" : "Saved successfully! 3 Days Free VIP trial activated 🎉");
-      applyLanguage();
-      switchTab('home');
+    let religionSelect = document.getElementById('my-input-religion').value;
+    if (religionSelect === 'MANUAL') {
+        religionSelect = document.getElementById('my-input-religion-custom') ? document.getElementById('my-input-religion-custom').value.trim() : '';
     }
+
+    const zodiac = document.getElementById('my-input-zodiac').value;
+    const bio = document.getElementById('my-input-bio').value.trim();
+
+    // 1. ⚠️ Check Validation (ስም፣ እድሜ እና Bio ካልተሞላ እንዳያልፍ ይከለክላል)
+    if (!name || !age || !bio) {
+        tg.showAlert(currentLang === 'am' ? 'እባክዎን ስም፣ እድሜ እና ስለ እኔ (Bio) የሚሉትን መረጃዎች በትክክል ይሙሉ!' : 'Please fill name, age, and bio!');
+        return;
+    }
+
+    // 2. በስልክ/Browser ላይ መረጃውን ሴቭ ማድረግ
+    const existingProfile = JSON.parse(localStorage.getItem('user_profile')) || {};
+    const registeredAt = existingProfile.registeredAt || new Date().toISOString();
+
+    const userProfile = { 
+        name, age, gender, phone, location, lookingFor, prefAge, 
+        religion: religionSelect, zodiac, bio, registeredAt 
+    };
+    
+    // በ LocalStorage ሴቭ ማድረግ (ስልኩ ላይ እንዳይጠፋ)
+    localStorage.setItem('user_profile', JSON.stringify(userProfile));
+
+    // 3. 🚀 መረጃውን ወደ Telegram Bot (Python backend) መላክ
+    if (window.Telegram && window.Telegram.WebApp) {
+        userProfile.action = "save_profile";
+        tg.sendData(JSON.stringify(userProfile));
+    }
+
+    tg.showAlert(currentLang === 'am' ? 'እንኳን ደስ አለዎት! የ 3 ቀን ነፃ VIP አባልነት ተበርክቶልዎታል 🎉' : 'Saved Successfully!');
+    applyLanguage();
+    switchTab('home');
+                                                 }
+      const existingProfile = JSON.parse(localStorage.getItem('user_profile')) || {};
+
 
     function loadMyProfile() {
       const saved = localStorage.getItem('user_profile');
