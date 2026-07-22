@@ -6,23 +6,23 @@ from flask import Flask, send_from_directory
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
-# 1. BOT TOKEN እና URL ማዘጋጀት
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "8959392899:AAG1hIoDIuktlazViTtd-EZ3qbw-CiuLSAk")
-WEB_APP_URL = "https://true-love-dating.onrender.com"
+WEB_APP_URL = "https://samiti3109-source.github.io/True-love-dating/"
 
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__, static_folder='.')
 
-# 2. FLASK SERVER (Render እንዳይዘጋው የሚያደርግ)
+# 1. FLASK ROUTES (/ እና /app ሁለቱንም እንዲቀበል)
 @app.route('/')
-def home():
-    return "True Love Bot is Running Live!"
+@app.route('/app')
+def serve_app():
+    return send_from_directory('.', 'index.html')
 
 @app.route('/<path:path>')
 def serve_static(path):
     return send_from_directory('.', path)
 
-# 3. DATABASE ማዘጋጀት
+# 2. DATABASE
 def init_db():
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
@@ -47,7 +47,7 @@ def init_db():
 
 init_db()
 
-# 4. /start COMMAND
+# 3. BOT /start COMMAND
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     markup = InlineKeyboardMarkup()
@@ -63,7 +63,7 @@ def send_welcome(message):
         reply_markup=markup
     )
 
-# 5. WEB APP DATA HANDLER (Profile Save ማድረጊያ)
+# 4. DATA HANDLER
 @bot.message_handler(content_types=['web_app_data'])
 def handle_web_app_data(message):
     try:
@@ -110,14 +110,11 @@ def handle_web_app_data(message):
         print(f"Error: {e}")
         bot.send_message(message.chat.id, "❌ መረጃውን ማስቀመጥ አልተቻለም።")
 
-# 6. FLASK እና BOT በአንድ ላይ ማስነሳት
 def run_flask():
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
 
 if __name__ == '__main__':
-    # Flask ን በ Background ማሰራት
     threading.Thread(target=run_flask).start()
     print("True Love Bot is running...")
-    # Bot ን ማሰራት
     bot.infinity_polling(skip_pending=True)
