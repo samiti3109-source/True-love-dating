@@ -4,7 +4,7 @@ from flask import Flask, send_from_directory
 import telebot
 
 # 1. Telegram Bot Token (ከ @BotFather ያገኘኸውን ማስገባት ትችላለህ)
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN_HERE")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8959392899:AAG1hIoDIuktlazViTtd-EZ3qbw-CiuLSAk")
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # 2. Web App (Flask Server) - HTML ፋይሉን ለማስተናገድ
@@ -43,4 +43,4 @@ if __name__ == "__main__":
     
     print("🤖 True Love Bot is running...")
     # የቴሌግራም ቦቱን ማስነሳት
-    bot.infinity_polling()
+    bot.infinity_polling(skip_pending=True)
