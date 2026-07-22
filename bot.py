@@ -4,6 +4,7 @@ import base64
 import binascii
 import sqlite3
 import threading
+from io import BytesIO
 from flask import Flask, send_from_directory, request, jsonify, abort
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
@@ -30,6 +31,10 @@ ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "https://samiti3109-source.git
 
 MAX_PHOTO_BYTES = 2 * 1024 * 1024  # 2 MB safety cap on uploaded photos
 DB_PATH = os.environ.get("DB_PATH", "database.db")
+
+# Your own Telegram numeric user id (chat with @userinfobot to get it).
+# VIP payment screenshots get forwarded here for manual review.
+ADMIN_CHAT_ID = os.environ.get("ADMIN_CHAT_ID")
 
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__, static_folder=".")
@@ -58,7 +63,7 @@ def serve_static(path):
 @app.after_request
 def add_cors_headers(resp):
     resp.headers["Access-Control-Allow-Origin"] = ALLOWED_ORIGIN
-    resp.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return resp
 
@@ -90,6 +95,18 @@ def init_db():
                 bio TEXT,
                 photo_base64 TEXT,
                 registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS vip_requests (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                package TEXT,
+                photo_base64 TEXT,
+                status TEXT DEFAULT 'pending',
+                submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """
         )
@@ -129,43 +146,9 @@ def handle_web_app_data(message):
             conn = get_db()
             try:
                 cursor = conn.cursor()
-                # UPSERT that only touches the text columns. This matters
-                # because the photo is uploaded separately via
-                # /upload_photo (see below) - if this handler ran a blind
-                # INSERT OR REPLACE it would wipe out a photo that was
-                # already saved, regardless of which request lands first.
-                cursor.execute(
-                    """
-                    INSERT INTO users
-                        (user_id, name, age, gender, phone, location,
-                         looking_for, pref_age, religion, zodiac, bio)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ON CONFLICT(user_id) DO UPDATE SET
-                        name=excluded.name,
-                        age=excluded.age,
-                        gender=excluded.gender,
-                        phone=excluded.phone,
-                        location=excluded.location,
-                        looking_for=excluded.looking_for,
-                        pref_age=excluded.pref_age,
-                        religion=excluded.religion,
-                        zodiac=excluded.zodiac,
-                        bio=excluded.bio
-                    """,
-                    (
-                        user_id,
-                        data.get("name"),
-                        data.get("age"),
-                        data.get("gender"),
-                        data.get("phone"),
-                        data.get("location"),
-                        data.get("lookingFor"),
-                        data.get("prefAge"),
-                        data.get("religion"),
-                        data.get("zodiac"),
-                        data.get("bio"),
-                    ),
-                )
+                # UPSERT that only touches the text columns; see
+                # upsert_profile_text_fields() for why photo is untouched.
+                upsert_profile_text_fields(cursor, user_id, data)
                 conn.commit()
             finally:
                 conn.close()
@@ -232,6 +215,198 @@ def upload_photo():
         conn.close()
 
     return jsonify({"ok": True})
+
+
+# 4a2. VIP PAYMENT RECEIPT ENDPOINT ------------------------------------------
+# The frontend previously just showed a fake "sent!" message without
+# actually sending anything anywhere. This endpoint receives the receipt
+# screenshot, stores a permanent record of it, and forwards the photo to
+# the admin's Telegram chat so a human can review and approve it.
+@app.route("/submit_vip_receipt", methods=["POST", "OPTIONS"])
+def submit_vip_receipt():
+    if request.method == "OPTIONS":
+        return "", 204
+
+    payload = request.get_json(silent=True) or {}
+    user_id = payload.get("user_id")
+    package = payload.get("package", "")
+    photo_b64 = payload.get("photo_base64")
+
+    if not user_id or not photo_b64:
+        return jsonify({"ok": False, "error": "user_id and photo_base64 are required"}), 400
+
+    if "," in photo_b64:
+        photo_b64 = photo_b64.split(",", 1)[1]
+
+    try:
+        raw = base64.b64decode(photo_b64, validate=True)
+    except (binascii.Error, ValueError):
+        return jsonify({"ok": False, "error": "invalid base64 data"}), 400
+
+    if len(raw) > MAX_PHOTO_BYTES:
+        return jsonify({"ok": False, "error": "photo too large (max 2MB)"}), 413
+
+    # 1. Keep a permanent record in the database, regardless of whether
+    # the Telegram notification below succeeds.
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO vip_requests (user_id, package, photo_base64) VALUES (?, ?, ?)",
+            (user_id, package, photo_b64),
+        )
+        conn.commit()
+    except Exception as e:
+        print(f"submit_vip_receipt DB error: {e}")
+        return jsonify({"ok": False, "error": "database error"}), 500
+    finally:
+        conn.close()
+
+    # 2. Forward the screenshot to the admin so it can actually be reviewed.
+    if not ADMIN_CHAT_ID:
+        print("ADMIN_CHAT_ID is not set - VIP receipt was saved but NOT forwarded to an admin.")
+        # Still return ok: the record is saved, it just wasn't pushed to Telegram yet.
+        return jsonify({"ok": True, "warning": "admin not configured"})
+
+    try:
+        bot.send_photo(
+            ADMIN_CHAT_ID,
+            BytesIO(raw),
+            caption=(
+                f"👑 New VIP payment receipt\n"
+                f"User ID: {user_id}\n"
+                f"Package: {package}"
+            ),
+        )
+    except Exception as e:
+        print(f"submit_vip_receipt admin notify error: {e}")
+        # The record is already saved in vip_requests, so this isn't fatal -
+        # you can still review it from the database even if the push failed.
+        return jsonify({"ok": True, "warning": "saved but admin notification failed"})
+
+    return jsonify({"ok": True})
+
+
+# 4b. SAVE PROFILE ENDPOINT (replaces tg.sendData() for the text fields) ---
+# tg.sendData() closes the Mini App the instant it's called, which makes it
+# impossible for the frontend to reliably show a success message and then
+# redirect within the app afterwards. Saving over a normal HTTP POST avoids
+# that problem entirely and lets the frontend know for certain whether the
+# save actually succeeded before it redirects.
+REQUIRED_PROFILE_FIELDS = ["name", "age", "phone", "location", "bio"]
+
+
+def upsert_profile_text_fields(cursor, user_id, data):
+    cursor.execute(
+        """
+        INSERT INTO users
+            (user_id, name, age, gender, phone, location,
+             looking_for, pref_age, religion, zodiac, bio)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET
+            name=excluded.name,
+            age=excluded.age,
+            gender=excluded.gender,
+            phone=excluded.phone,
+            location=excluded.location,
+            looking_for=excluded.looking_for,
+            pref_age=excluded.pref_age,
+            religion=excluded.religion,
+            zodiac=excluded.zodiac,
+            bio=excluded.bio
+        """,
+        (
+            user_id,
+            data.get("name"),
+            data.get("age"),
+            data.get("gender"),
+            data.get("phone"),
+            data.get("location"),
+            data.get("lookingFor"),
+            data.get("prefAge"),
+            data.get("religion"),
+            data.get("zodiac"),
+            data.get("bio"),
+        ),
+    )
+
+
+@app.route("/save_profile", methods=["POST", "OPTIONS"])
+def save_profile():
+    if request.method == "OPTIONS":
+        return "", 204
+
+    data = request.get_json(silent=True) or {}
+    user_id = data.get("user_id")
+
+    if not user_id:
+        return jsonify({"ok": False, "error": "user_id is required"}), 400
+
+    missing = [f for f in REQUIRED_PROFILE_FIELDS if not str(data.get(f, "")).strip()]
+    if missing:
+        return jsonify({"ok": False, "error": f"missing fields: {', '.join(missing)}"}), 400
+
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        upsert_profile_text_fields(cursor, user_id, data)
+        conn.commit()
+    except Exception as e:
+        print(f"save_profile DB error: {e}")
+        return jsonify({"ok": False, "error": "database error"}), 500
+    finally:
+        conn.close()
+
+    # Best-effort confirmation message in the chat. For a private chat
+    # opened via the bot's own button, chat_id == user_id, but this is
+    # wrapped in try/except since it's not essential to the save itself.
+    try:
+        bot.send_message(
+            user_id,
+            f"🎉 **ፕሮፋይልዎ በስኬት ተቀምጧል!**\n\n"
+            f"👤 **ስም:** {data.get('name')}\n"
+            f"🎂 **እድሜ:** {data.get('age')}\n"
+            f"📱 **ስልክ:** {data.get('phone')}\n"
+            f"📍 **ቦታ:** {data.get('location')}",
+            parse_mode="Markdown",
+        )
+    except Exception as e:
+        print(f"save_profile notify error: {e}")
+
+    return jsonify({"ok": True})
+
+
+# 4c. PROFILE LOOKUP ENDPOINT --------------------------------------------
+# Lets the frontend ask "does this user already have a saved profile?" on
+# load, so returning users skip straight to Discover instead of the
+# profile form - and so this works from any device, not just the one
+# local storage happens to be cached on.
+PROFILE_COLUMNS = [
+    "name", "age", "gender", "phone", "location",
+    "looking_for", "pref_age", "religion", "zodiac", "bio",
+]
+
+
+@app.route("/profile/<int:user_id>", methods=["GET"])
+def get_profile(user_id):
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            f"SELECT {', '.join(PROFILE_COLUMNS)}, photo_base64 IS NOT NULL "
+            f"FROM users WHERE user_id = ?",
+            (user_id,),
+        )
+        row = cursor.fetchone()
+    finally:
+        conn.close()
+
+    if not row:
+        return jsonify({"ok": True, "exists": False})
+
+    profile = dict(zip(PROFILE_COLUMNS, row[:-1]))
+    profile["hasPhoto"] = bool(row[-1])
+    return jsonify({"ok": True, "exists": True, "profile": profile})
 
 
 def run_flask():
