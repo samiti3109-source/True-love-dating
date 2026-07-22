@@ -12,7 +12,7 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 # The bot token must come from an environment variable. Never hardcode a
 # real token in source control - anyone who sees this file (or the repo
 # history) can take over the bot with it.
-BOT_TOKEN = os.environ.get("8959392899:AAG1hIoDIuktlazViTtd-EZ3qbw-CiuLSAk")
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
 if not BOT_TOKEN:
     raise RuntimeError(
         "BOT_TOKEN environment variable is not set. "
