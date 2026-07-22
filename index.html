@@ -506,7 +506,7 @@
     // base64 photo will always exceed, so the photo is uploaded straight
     // to the backend over HTTP instead. Point this at your deployed
     // backend URL (e.g. your Render service), with no trailing slash.
-    const BACKEND_URL = "https://true-love-dating.onrender.com";
+    const BACKEND_URL = "https://YOUR-BACKEND-URL.onrender.com";
 
     const FREE_DAILY_PROFILE_LIMIT = 25;
     const FREE_DAILY_CHAT_LIMIT = 10;
@@ -514,6 +514,28 @@
 
     let uploadedPhotoBase64 = "";
     let selectedPhotoFile = null;
+    let vipReceiptBase64 = "";
+
+    // A non-blocking toast, used for the "saved, redirecting..." message.
+    // tg.showAlert() requires the user to tap "Close" before anything else
+    // happens, which rules it out for an automatic redirect.
+    function showToast(message) {
+      let toast = document.getElementById('app-toast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'app-toast';
+        toast.style.cssText =
+          'position:fixed;left:50%;bottom:90px;transform:translateX(-50%);' +
+          'background:#1b8a6b;color:#fff;padding:12px 20px;border-radius:10px;' +
+          'font-size:14px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);' +
+          'max-width:85%;text-align:center;';
+        document.body.appendChild(toast);
+      }
+      toast.innerText = message;
+      toast.style.display = 'block';
+      clearTimeout(toast._hideTimer);
+      toast._hideTimer = setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
     let selectedVIPPkgEn = "6 Months (899 Birr)";
     let selectedVIPPkgAm = "6 ወር (899 ብር)";
 
@@ -660,6 +682,7 @@
       if (file) {
         const reader = new FileReader();
         reader.onload = function(evt) {
+          vipReceiptBase64 = evt.target.result;
           const preview = document.getElementById('vip-ss-preview');
           preview.src = evt.target.result;
           preview.style.display = 'block';
@@ -669,14 +692,57 @@
       }
     }
 
-    function submitVIPReceipt() {
+    async function submitVIPReceipt() {
       const fileInput = document.getElementById('vip-ss-file');
-      if (!fileInput.files || fileInput.files.length === 0) {
+      if (!fileInput.files || fileInput.files.length === 0 || !vipReceiptBase64) {
         tg.showAlert(currentLang === 'am' ? "እባክዎን መጀመሪያ የደረሰኙን ስክሪንሾት ያያይዙ!" : "Please upload the screenshot receipt first!");
         return;
       }
 
+      const userId = tg.initDataUnsafe?.user?.id;
+      if (!userId) {
+        tg.showAlert(currentLang === 'am' ? 'ይህን ገጽ በቴሌግራም ውስጥ ብቻ ይክፈቱ።' : 'Please open this inside Telegram to submit your receipt.');
+        return;
+      }
+
+      const submitBtn = document.querySelector('#vip-modal .submit-btn');
+      const originalLabel = submitBtn ? submitBtn.innerText : '';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = currentLang === 'am' ? 'በመላክ ላይ...' : 'Sending...';
+      }
+
+      let sentOk = false;
+      try {
+        const res = await fetch(`${BACKEND_URL}/submit_vip_receipt`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: userId,
+            package: selectedVIPPkgEn,
+            photo_base64: vipReceiptBase64
+          })
+        });
+        const result = await res.json().catch(() => ({}));
+        sentOk = res.ok && result.ok;
+      } catch (err) {
+        console.error('VIP receipt submit failed:', err);
+        sentOk = false;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = originalLabel;
+      }
+
+      if (!sentOk) {
+        tg.showAlert(currentLang === 'am' ? "❌ ደረሰኙን መላክ አልተቻለም። እባክዎን እንደገና ይሞክሩ ወይም ኢንተርኔትዎን ያረጋግጡ።" : "❌ Could not send the receipt. Please try again or check your connection.");
+        return; // do NOT close the modal - let them retry
+      }
+
       tg.showAlert(currentLang === 'am' ? "✅ ደረሰኙ በትክክል ተልኳል! በአጭር ጊዜ ውስጥ ተመርምሮ ቪአይፒው ይበራልዎታል።" : "✅ Receipt submitted! Your VIP will be activated shortly.");
+      vipReceiptBase64 = "";
+      fileInput.value = "";
       closeVIPModal();
     }
 
@@ -1038,29 +1104,37 @@ async function saveMyProfile() {
     }
 
     const userId = tg.initDataUnsafe?.user?.id;
-
-    // 2. 📸 Upload the photo directly to the backend first (tg.sendData()
-    // cannot carry a base64 photo - it is capped at 4096 bytes).
     const saveBtn = document.getElementById('btn-save');
-    if (selectedPhotoFile) {
-        if (!userId) {
-            tg.showAlert(currentLang === 'am' ? 'የፎቶ መስቀያ ስራ ላይ ለማዋል ይህን ገጽ በቴሌግራም ውስጥ ይክፈቱ።' : 'Open this inside Telegram to upload a photo.');
-        } else {
-            saveBtn.disabled = true;
-            const originalLabel = saveBtn.innerText;
-            saveBtn.innerText = currentLang === 'am' ? 'ፎቶ በመላክ ላይ...' : 'Uploading photo...';
-            const uploaded = await uploadPhotoToServer(userId);
-            saveBtn.disabled = false;
-            saveBtn.innerText = originalLabel;
-            if (!uploaded) {
-                tg.showAlert(currentLang === 'am' ? '⚠️ ፎቶውን መላክ አልተቻለም፣ የተቀሩት መረጃዎች ግን ይቀመጣሉ።' : '⚠️ Could not upload the photo, but the rest of your profile will still be saved.');
-            }
-        }
+
+    if (!userId) {
+        tg.showAlert(currentLang === 'am' ? 'ይህን ገጽ በቴሌግራም ውስጥ ብቻ ይክፈቱ።' : 'Please open this inside Telegram to save your profile.');
+        return;
     }
 
-    // 3. መረጃውን በአንድ Object ማዘጋጀት (ፎቶው ራሱ ወደ ባክኤንድ ተልኳል፣ እዚህ ግን ፎቶ አለ የሚል ምልክት ብቻ ይያዛል)
+    saveBtn.disabled = true;
+    const originalLabel = saveBtn.innerText;
+
+    // 2. 📸 Upload the photo first (direct HTTP - tg.sendData() cannot
+    // carry a base64 photo, it's capped at 4096 bytes).
+    let photoOk = true; // true when there's nothing to upload
+    if (selectedPhotoFile) {
+        saveBtn.innerText = currentLang === 'am' ? 'ፎቶ በመላክ ላይ...' : 'Uploading photo...';
+        photoOk = await uploadPhotoToServer(userId);
+    }
+
+    if (!photoOk) {
+        saveBtn.disabled = false;
+        saveBtn.innerText = originalLabel;
+        tg.showAlert(currentLang === 'am' ? '⚠️ ፎቶውን መላክ አልተቻለም። እባክዎን እንደገና ይሞክሩ።' : '⚠️ Could not upload the photo. Please try again.');
+        return; // do NOT redirect - photo upload failed
+    }
+
+    // 3. 💾 Save the text profile - over HTTP, not tg.sendData(). sendData()
+    // closes the Mini App immediately, which would make it impossible to
+    // show a success message and redirect to Discover from inside the app.
     const userProfile = {
         action: "save_profile",
+        user_id: userId,
         name: name,
         age: age,
         gender: gender,
@@ -1071,42 +1145,91 @@ async function saveMyProfile() {
         religion: religionSelect,
         zodiac: zodiac,
         bio: bio,
-        hasPhoto: !!selectedPhotoFile,
         registeredAt: new Date().toISOString()
     };
 
-    // 4. በ LocalStorage ሴቭ ማድረግ (ስልኩ ላይ እንዳይጠፋ) - ፎቶውንም ጨምሮ ለ UI ፕሪቪው ብቻ
-    localStorage.setItem('user_profile', JSON.stringify({ ...userProfile, photo: uploadedPhotoBase64 }));
-
-    // 5. 🚀 የጽሑፍ መረጃውን ወደ Telegram Bot (Python Backend) መላክ
-    if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.sendData(JSON.stringify(userProfile));
+    saveBtn.innerText = currentLang === 'am' ? 'በማስቀመጥ ላይ...' : 'Saving...';
+    let profileOk = false;
+    try {
+        const res = await fetch(`${BACKEND_URL}/save_profile`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userProfile)
+        });
+        const result = await res.json().catch(() => ({}));
+        profileOk = res.ok && result.ok;
+    } catch (err) {
+        console.error('Profile save failed:', err);
+        profileOk = false;
     }
 
-    tg.showAlert(currentLang === 'am' ? 'ፕሮፋይልዎ በስኬት ተቀምጧል! 🎉' : 'Saved Successfully!');
+    saveBtn.disabled = false;
+    saveBtn.innerText = originalLabel;
+
+    if (!profileOk) {
+        tg.showAlert(currentLang === 'am' ? '⚠️ ፕሮፋይልዎን ማስቀመጥ አልተቻለም። እባክዎን እንደገና ይሞክሩ።' : '⚠️ Could not save your profile. Please try again.');
+        return; // do NOT redirect - profile save failed
+    }
+
+    // 4. 💽 Keep a local cache too (fast prefill / preview), not the
+    // source of truth - the database row saved above is.
+    localStorage.setItem('user_profile', JSON.stringify({ ...userProfile, photo: uploadedPhotoBase64 }));
+
+    // 5. ✅ Both succeeded: show a non-blocking success message and
+    // redirect to Discover automatically after 1 second - no button press.
     applyLanguage();
-    switchTab('home');
+    showToast(currentLang === 'am' ? 'ፕሮፋይልዎ በስኬት ተቀምጧል! 🎉' : 'Profile saved! 🎉');
+    setTimeout(() => switchTab('home'), 1000);
 }
 
-    function loadMyProfile() {
-      const saved = localStorage.getItem('user_profile');
-      if (saved) {
-        const p = JSON.parse(saved);
-        document.getElementById('my-input-name').value = p.name || '';
-        document.getElementById('my-input-age').value = p.age || '';
-        document.getElementById('my-input-gender').value = p.gender || 'Female';
-        document.getElementById('my-input-phone').value = p.phone || '';
-        document.getElementById('my-input-location').value = p.location || '';
-        document.getElementById('my-pref-looking').value = p.lookingFor || 'Male';
-        document.getElementById('my-pref-age').value = p.prefAge || '18-25';
-        document.getElementById('my-input-zodiac').value = p.zodiac || 'Aries ♈';
-        document.getElementById('my-input-bio').value = p.bio || '';
-        if (p.photo) {
-          uploadedPhotoBase64 = p.photo;
-          const preview = document.getElementById('my-photo-preview');
-          preview.src = p.photo;
-          preview.style.display = 'block';
+    function fillProfileForm(p) {
+      document.getElementById('my-input-name').value = p.name || '';
+      document.getElementById('my-input-age').value = p.age || '';
+      document.getElementById('my-input-gender').value = p.gender || 'Female';
+      document.getElementById('my-input-phone').value = p.phone || '';
+      document.getElementById('my-input-location').value = p.location || '';
+      document.getElementById('my-pref-looking').value = p.lookingFor || p.looking_for || 'Male';
+      document.getElementById('my-pref-age').value = p.prefAge || p.pref_age || '18-25';
+      document.getElementById('my-input-zodiac').value = p.zodiac || 'Aries ♈';
+      document.getElementById('my-input-bio').value = p.bio || '';
+      if (p.photo) {
+        uploadedPhotoBase64 = p.photo;
+        const preview = document.getElementById('my-photo-preview');
+        preview.src = p.photo;
+        preview.style.display = 'block';
+      }
+    }
+
+    async function loadMyProfile() {
+      const userId = tg.initDataUnsafe?.user?.id;
+      const cached = localStorage.getItem('user_profile');
+
+      // Prefill instantly from the local cache if present, so the form
+      // isn't empty while the network check below is in flight.
+      if (cached) fillProfileForm(JSON.parse(cached));
+
+      if (userId) {
+        try {
+          const res = await fetch(`${BACKEND_URL}/profile/${userId}`);
+          const result = await res.json();
+          if (result.ok && result.exists) {
+            fillProfileForm(result.profile);
+            switchTab('home'); // already has a profile - go straight to Discover
+            return;
+          } else if (result.ok && !result.exists) {
+            switchTab('profile');
+            return;
+          }
+          // On an unexpected response, fall through to the local-storage check below.
+        } catch (err) {
+          console.error('Profile lookup failed, falling back to local cache:', err);
+          // fall through to the local-storage check below
         }
+      }
+
+      // No Telegram user id, or the server check failed - fall back to
+      // whatever was last saved on this device.
+      if (cached) {
         switchTab('home');
       } else {
         switchTab('profile');
