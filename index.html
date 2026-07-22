@@ -1013,14 +1013,19 @@ function saveMyProfile() {
         bio: bio 
     };
 
-    // 3. በ LocalStorage ሴቭ ማድረግ (ስልኩ ላይ እንዳይጠፋ)
+    // 3. በ LocalStorage ሴቭ ማድረግ (ስልክ ላይ እንዲቀመጥ)
     localStorage.setItem('user_profile', JSON.stringify(userProfile));
 
-    // 4. 🚀 መረጃውን ወደ Telegram Bot (Python Backend) መላክ
+    // 4. 🔥 መረጃውን ወደ Telegram Bot መላክ (ይህች ካልኖረች Save አይልም!)
     if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.sendData(JSON.stringify(userProfile));
+        window.Telegram.WebApp.showAlert(
+            currentLang === 'am' ? 'ፕሮፋይልዎ በስኬት ተቀምጧል! 🎉' : 'Profile saved successfully! 🎉'
+        );
+    } else {
+        alert('ፕሮፋይልዎ በስኬት ተቀምጧል!');
     }
-
+}
     tg.showAlert(currentLang === 'am' ? 'ፕሮፋይልዎ በስኬት ተቀምጧል! 🎉' : 'Saved Successfully!');
     applyLanguage();
     switchTab('home');
