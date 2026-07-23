@@ -184,6 +184,38 @@ def handle_web_app_data(message):
                 parse_mode="Markdown",
             )
 
+        elif data.get("action") == "report_user":
+            reporter_id = message.from_user.id
+            reporter_name = message.from_user.first_name or str(reporter_id)
+            reported_user = data.get("reported_user", "unknown")
+
+            # Save a permanent record, same table the /report HTTP endpoint
+            # and the admin-only /reports command already use.
+            conn = get_db()
+            try:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO reports (reporter_id, reported_user, reason) VALUES (?, ?, ?)",
+                    (reporter_id, str(reported_user), "Reported from Discover feed"),
+                )
+                conn.commit()
+            except Exception as e:
+                print(f"report_user DB error: {e}")
+            finally:
+                conn.close()
+
+            if ADMIN_CHAT_ID:
+                try:
+                    bot.send_message(
+                        ADMIN_CHAT_ID,
+                        "🚨 New user report\n"
+                        f"Reported by: {reporter_name} (ID: {reporter_id})\n"
+                        f"Reported user: {reported_user}\n"
+                        f"Time: {datetime.now(timezone.utc).isoformat(timespec='seconds')} UTC",
+                    )
+                except Exception as e:
+                    print(f"report_user admin notify error: {e}")
+
     except Exception as e:
         print(f"Error: {e}")
         bot.send_message(message.chat.id, "❌ መረጃውን ማስቀመጥ አልተቻለም።")
@@ -285,7 +317,8 @@ def submit_vip_receipt():
         conn.close()
 
     # 2. Forward the screenshot to the admin so it can actually be reviewed,
-    # with inline Approve/Reject buttons wired to the request id above.
+    # with inline Approve/Reject buttons wired directly to this user_id
+    # (request_id above is kept only as an audit record in vip_requests).
     if not ADMIN_CHAT_ID:
         print("ADMIN_CHAT_ID is not set - VIP receipt was saved but NOT forwarded to an admin.")
         # Still return ok: the record is saved, it just wasn't pushed to Telegram yet.
@@ -307,8 +340,8 @@ def submit_vip_receipt():
 
     markup = InlineKeyboardMarkup()
     markup.add(
-        InlineKeyboardButton("✅ Approve VIP", callback_data=f"vip_approve:{request_id}"),
-        InlineKeyboardButton("❌ Reject VIP", callback_data=f"vip_reject:{request_id}"),
+        InlineKeyboardButton("✅ Approve VIP", callback_data=f"vip_approve_{user_id}"),
+        InlineKeyboardButton("❌ Reject VIP", callback_data=f"vip_reject_{user_id}"),
     )
 
     caption = (
@@ -332,40 +365,45 @@ def submit_vip_receipt():
 
 # 4a3. VIP APPROVE/REJECT CALLBACK -------------------------------------------
 # Handles taps on the "✅ Approve VIP" / "❌ Reject VIP" buttons attached to
-# the admin notification above. Flips users.is_vip and tells the user.
+# the admin notification above. callback_data is vip_approve_<user_id> or
+# vip_reject_<user_id>, so the decision is keyed directly off the user_id
+# that was embedded in the button - no extra DB lookup needed to act on it.
 @bot.callback_query_handler(
-    func=lambda call: call.data and call.data.startswith(("vip_approve:", "vip_reject:"))
+    func=lambda call: call.data
+    and (call.data.startswith("vip_approve_") or call.data.startswith("vip_reject_"))
 )
 def handle_vip_decision(call):
-    action, _, request_id_str = call.data.partition(":")
+    if call.data.startswith("vip_approve_"):
+        action = "approve"
+        target_user_id_str = call.data[len("vip_approve_"):]
+    else:
+        action = "reject"
+        target_user_id_str = call.data[len("vip_reject_"):]
+
     try:
-        request_id = int(request_id_str)
+        target_user_id = int(target_user_id_str)
     except ValueError:
-        bot.answer_callback_query(call.id, "Invalid request id")
+        bot.answer_callback_query(call.id, "Invalid user id")
         return
 
     conn = get_db()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT user_id, status FROM vip_requests WHERE id = ?", (request_id,))
-        row = cursor.fetchone()
-        if not row:
-            bot.answer_callback_query(call.id, "Request not found")
-            return
-
-        target_user_id, status = row
-        if status != "pending":
-            bot.answer_callback_query(call.id, f"Already {status}")
-            return
-
-        new_status = "approved" if action == "vip_approve" else "rejected"
-        cursor.execute("UPDATE vip_requests SET status = ? WHERE id = ?", (new_status, request_id))
-        if new_status == "approved":
+        if action == "approve":
             cursor.execute(
                 "INSERT INTO users (user_id, is_vip) VALUES (?, 1) "
                 "ON CONFLICT(user_id) DO UPDATE SET is_vip = 1",
                 (target_user_id,),
             )
+        # Best-effort: mark this user's most recent pending request as
+        # decided, purely for the /reports-style audit trail - the actual
+        # approval above is already keyed directly off target_user_id.
+        cursor.execute(
+            "UPDATE vip_requests SET status = ? "
+            "WHERE id = (SELECT id FROM vip_requests WHERE user_id = ? AND status = 'pending' "
+            "ORDER BY submitted_at DESC LIMIT 1)",
+            ("approved" if action == "approve" else "rejected", target_user_id),
+        )
         conn.commit()
     except Exception as e:
         print(f"handle_vip_decision DB error: {e}")
@@ -374,11 +412,11 @@ def handle_vip_decision(call):
     finally:
         conn.close()
 
-    if new_status == "approved":
-        user_message = "🎉 Congratulations! Your VIP membership has been approved."
+    if action == "approve":
+        user_message = "🎉 Congratulations! Your VIP status has been approved."
         admin_note = "✅ Approved"
     else:
-        user_message = "❌ Your payment could not be verified. Please upload a clear payment screenshot."
+        user_message = "❌ Sorry, your VIP receipt could not be verified. Please try again."
         admin_note = "❌ Rejected"
 
     try:
@@ -560,7 +598,7 @@ def submit_report():
                 f"Reported user: {reported_user}\n"
                 f"Reason: {reason}\n"
                 f"Time: {datetime.now(timezone.utc).isoformat(timespec='seconds')} UTC",
-      )
+            )
         except Exception as e:
             print(f"submit_report admin notify error: {e}")
 
@@ -609,3 +647,4 @@ if __name__ == "__main__":
     threading.Thread(target=run_flask, daemon=True).start()
     print("True Love Bot is running...")
     bot.infinity_polling(skip_pending=True)
+    
