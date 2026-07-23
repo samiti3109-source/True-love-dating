@@ -248,6 +248,78 @@
     }
 
     .preview-ss { max-height: 100px; object-fit: contain; border-radius: 8px; display: none; }
+
+    /* Report button on the swipe card */
+    .report-flag-btn {
+      position: absolute; top: 14px; right: 14px; z-index: 3;
+      width: 34px; height: 34px; border-radius: 50%; border: none;
+      background: rgba(5, 11, 24, 0.55); color: #ff9f43; font-size: 16px;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      backdrop-filter: blur(4px);
+    }
+    .report-flag-btn:active { transform: scale(0.9); }
+
+    /* Profile display card v2: gradient cover banner + centered overlapping avatar */
+    .profile-display-container {
+      width: 100%; max-width: 330px; display: none; flex-direction: column;
+      align-items: center; gap: 16px; padding-bottom: 110px;
+    }
+    .premium-card {
+      width: 100%; background: var(--card-bg); border-radius: 26px;
+      border: 1px solid var(--border-color); overflow: visible;
+      box-shadow: 0 16px 34px rgba(0, 0, 0, 0.45); position: relative;
+    }
+    .profile-cover-banner {
+      width: 100%; height: 110px; border-radius: 26px 26px 0 0;
+      background: var(--primary-grad); position: relative; overflow: hidden;
+    }
+    .premium-vip-ribbon {
+      position: absolute; top: 14px; right: 14px; z-index: 2;
+      background: linear-gradient(135deg, #ffb703, #fb8500); color: #000;
+      font-weight: 800; font-size: 12px; padding: 5px 12px; border-radius: 20px;
+      box-shadow: 0 3px 10px rgba(251, 133, 0, 0.5);
+    }
+    .profile-avatar-wrap {
+      display: flex; justify-content: center; margin-top: -50px; position: relative; z-index: 2;
+    }
+    .profile-avatar-lg {
+      width: 100px; height: 100px; border-radius: 50%; object-fit: cover;
+      border: 4px solid var(--card-bg); background: #091326;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+    }
+    .premium-card-name-row {
+      display: flex; align-items: baseline; justify-content: center; gap: 8px;
+      margin-top: 10px;
+    }
+    .premium-card-name { font-size: 22px; font-weight: 800; color: var(--text-color); }
+    .premium-card-age { font-size: 18px; font-weight: 600; color: var(--subtext-color); }
+
+    .premium-card-body {
+      padding: 14px 18px 20px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .profile-detail-row {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--input-bg); border: 1px solid var(--border-color);
+      border-radius: 12px; padding: 11px 14px; font-size: 13px;
+    }
+    .profile-detail-row .detail-icon { font-size: 15px; flex-shrink: 0; }
+    .profile-detail-row .detail-label {
+      font-size: 10px; color: var(--subtext-color); font-weight: 700; letter-spacing: 0.3px;
+      display: block; margin-bottom: 2px;
+    }
+    .profile-detail-row .detail-value { font-weight: 600; color: var(--text-color); }
+
+    .premium-bio-box {
+      background: var(--input-bg); border: 1px solid var(--border-color);
+      border-radius: 14px; padding: 14px; font-size: 13px; line-height: 1.6; color: var(--text-color);
+    }
+    .premium-bio-label { font-size: 11px; color: var(--subtext-color); font-weight: 700; margin-bottom: 6px; letter-spacing: 0.4px; }
+
+    .edit-profile-btn {
+      width: 100%; background: var(--primary-grad); color: white; border: none;
+      padding: 14px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer;
+      box-shadow: 0 4px 15px rgba(67, 100, 247, 0.3);
+    }
   </style>
 </head>
 <body>
@@ -269,6 +341,7 @@
     <!-- 1. SWIPE VIEW -->
     <div id="swipe-view" style="display: none; flex-direction: column; align-items: center;">
       <div class="profile-card">
+        <button class="report-flag-btn" onclick="reportUser()" title="Report">🚨</button>
         <div class="card-img-container">
           <img id="profile-img" class="card-img" src="" alt="Profile" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png';">
         </div>
@@ -410,6 +483,44 @@
       </div>
 
       <button class="save-btn" id="btn-save" onclick="saveMyProfile()">Save Profile</button>
+    </div>
+
+    <!-- 3b. PROFILE DISPLAY VIEW (premium card, shown once a profile is saved) -->
+    <div id="profile-display-view" class="profile-display-container">
+      <div class="premium-card">
+        <div class="profile-cover-banner">
+          <span id="pd-vip-ribbon" class="premium-vip-ribbon" style="display:none;">👑 VIP</span>
+        </div>
+        <div class="profile-avatar-wrap">
+          <img id="pd-photo" class="profile-avatar-lg" src="" alt="Profile photo"
+               onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png';">
+        </div>
+        <div class="premium-card-name-row">
+          <span class="premium-card-name" id="pd-name">-</span>
+          <span class="premium-card-age" id="pd-age"></span>
+        </div>
+        <div class="premium-card-body">
+          <div class="profile-detail-row">
+            <span class="detail-icon">📍</span>
+            <div>
+              <span class="detail-label" id="pd-lbl-location">LOCATION</span>
+              <span class="detail-value" id="pd-location">-</span>
+            </div>
+          </div>
+          <div class="profile-detail-row">
+            <span class="detail-icon">📱</span>
+            <div>
+              <span class="detail-label" id="pd-lbl-phone">PHONE</span>
+              <span class="detail-value" id="pd-phone">-</span>
+            </div>
+          </div>
+          <div class="premium-bio-box">
+            <div class="premium-bio-label" id="pd-lbl-bio">ABOUT ME</div>
+            <div id="pd-bio">-</div>
+          </div>
+        </div>
+      </div>
+      <button class="edit-profile-btn" id="btn-edit-profile" onclick="editMyProfile()">✏️ Edit Profile</button>
     </div>
 
   </div>
@@ -595,7 +706,14 @@
         nameLabel: "ስም:",
         proofDesc: "ክፍያውን ከፈጸሙ በኋላ የስክሪንሾት ፎቶውን እዚህ ያያይዙ፡",
         selectBtn: "ስክሪንሾት ለመምረጥ እዚህ ይጫኑ",
-        submitBtn: "ማረጋገጫውን ላክ"
+        submitBtn: "ማረጋገጫውን ላክ",
+
+        // Report modal
+        reportSent: "✅ ሪፖርትዎ ተልኳል። እናመሰግናለን!",
+
+        // Profile display card
+        pdLocationLbl: "አካባቢ", pdPhoneLbl: "ስልክ", pdBioLbl: "ስለ እኔ",
+        btnEditProfile: "✏️ ፕሮፋይል አስተካክል"
       },
       en: {
         matchesTitle: "Your Matches",
@@ -644,7 +762,14 @@
         nameLabel: "Name:",
         proofDesc: "After payment, upload your receipt screenshot here:",
         selectBtn: "Tap here to select screenshot",
-        submitBtn: "Submit Receipt"
+        submitBtn: "Submit Receipt",
+
+        // Report modal
+        reportSent: "✅ Your report was sent. Thank you!",
+
+        // Profile display card
+        pdLocationLbl: "LOCATION", pdPhoneLbl: "PHONE", pdBioLbl: "ABOUT ME",
+        btnEditProfile: "✏️ Edit Profile"
       }
     };
 
@@ -746,6 +871,33 @@
       closeVIPModal();
     }
 
+    // 🚨 Report User: a lightweight confirm() dialog, then a fire-and-forget
+    // tg.sendData() ping to the bot (handled by handle_web_app_data's
+    // action == 'report_user' branch, which forwards it to the admin).
+    function reportUser() {
+      const t = translations[currentLang];
+      const reportedProfile = profiles[currentIndex];
+      const targetName = reportedProfile ? (reportedProfile.name || `User #${reportedProfile.id}`) : 'Unknown';
+
+      const confirmMsg = currentLang === 'am'
+        ? `${targetName}ን ሪፖርት ማድረግ ይፈልጋሉ?`
+        : `Are you sure you want to report ${targetName}?`;
+
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        tg.sendData(JSON.stringify({ action: 'report_user', reported_user: targetName }));
+      } catch (err) {
+        console.warn('tg.sendData unavailable (e.g. testing outside Telegram):', err);
+      }
+
+      if (tg.showAlert) {
+        tg.showAlert(t.reportSent);
+      } else {
+        alert(t.reportSent);
+      }
+    }
+
     function checkVIPStatus() {
       const savedProfile = JSON.parse(localStorage.getItem('user_profile'));
       
@@ -800,8 +952,7 @@
       } else {
         tg.showAlert(currentLang === 'am' ? "እባክዎን ስልክ ቁጥርዎን በጽሑፍ ያስገቡ" : "Please type your phone number manually.");
       }
-    }
-
+    
     function requestGPSLocation() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -919,6 +1070,12 @@
       document.getElementById('btn-save').innerText = isSaved ? t.btnSaveEdit : t.btnSave;
       document.getElementById('opt-rel-manual').innerText = t.relManual;
       
+      document.getElementById('my-input-name').placeholder = t.placeName;
+      document.getElementById('my-input-location').placeholder = t.placeLocation;
+      document.getElementById('my-input-bio').placeholder = t.placeBio;
+      document.getElementById('my-input-religion-manual').placeholder = t.placeRel;
+
+      document.getElementById('btn-share-phone').innerHTML = t.btnSharePhone;
       document.getElementById('btn-gps-location').innerHTML = t.btnGpsLocation;
 
       if (!uploadedPhotoBase64) {
@@ -966,6 +1123,13 @@
       document.getElementById('txt-submit-btn').innerText = t.submitBtn;
 
       document.getElementById('selected-pkg-label').innerText = currentLang === 'am' ? selectedVIPPkgAm : selectedVIPPkgEn;
+
+      // Profile display card
+      document.getElementById('pd-lbl-location').innerText = t.pdLocationLbl;
+      document.getElementById('pd-lbl-phone').innerText = t.pdPhoneLbl;
+      document.getElementById('pd-lbl-bio').innerText = t.pdBioLbl;
+      document.getElementById('btn-edit-profile').innerText = t.btnEditProfile;
+      if (localStorage.getItem('user_profile') !== null) renderProfileDisplay();
 
       updateLimitCountersUI();
     }
@@ -1056,6 +1220,10 @@
       if (username) tg.openTelegramLink(`https://t.me/${username}`);
     }
 
+    // Tracks whether the profile tab should show the edit form even though
+    // a profile already exists (set by the "Edit Profile" button).
+    let forceProfileEditMode = false;
+
     function switchTab(tab) {
       const isSaved = localStorage.getItem('user_profile') !== null;
       if (!isSaved && (tab === 'home' || tab === 'matches')) {
@@ -1063,13 +1231,46 @@
         tab = 'profile';
       }
 
+      if (tab !== 'profile') forceProfileEditMode = false;
+      const showDisplayCard = tab === 'profile' && isSaved && !forceProfileEditMode;
+      const showEditForm = tab === 'profile' && (!isSaved || forceProfileEditMode);
+
       document.getElementById('swipe-view').style.display = tab === 'home' ? 'flex' : 'none';
       document.getElementById('matches-view').style.display = tab === 'matches' ? 'flex' : 'none';
-      document.getElementById('profile-view').style.display = tab === 'profile' ? 'flex' : 'none';
+      document.getElementById('profile-view').style.display = showEditForm ? 'flex' : 'none';
+      document.getElementById('profile-display-view').style.display = showDisplayCard ? 'flex' : 'none';
+
+      if (showDisplayCard) renderProfileDisplay();
 
       document.getElementById('nav-home').classList.toggle('active', tab === 'home');
       document.getElementById('nav-matches').classList.toggle('active', tab === 'matches');
       document.getElementById('nav-profile').classList.toggle('active', tab === 'profile');
+    }
+
+    // "Edit Profile" button on the display card - drops back into the form,
+    // prefilled with the saved data.
+    function editMyProfile() {
+      const cached = localStorage.getItem('user_profile');
+      if (cached) fillProfileForm(JSON.parse(cached));
+      forceProfileEditMode = true;
+      switchTab('profile');
+    }
+
+    // Renders the saved profile into the premium profile card.
+    function renderProfileDisplay() {
+      const cached = localStorage.getItem('user_profile');
+      if (!cached) return;
+      const p = JSON.parse(cached);
+
+      document.getElementById('pd-photo').src = p.photo || '';
+      document.getElementById('pd-name').innerText = p.name || '-';
+      document.getElementById('pd-age').innerText = p.age ? `, ${p.age}` : '';
+      document.getElementById('pd-location').innerText = p.location || '-';
+      document.getElementById('pd-phone').innerText = p.phone || '-';
+      document.getElementById('pd-bio').innerText = p.bio || '-';
+
+      const vipStatus = checkVIPStatus();
+      document.getElementById('pd-vip-ribbon').style.display = vipStatus.isVIP ? 'inline-block' : 'none';
     }
 
 async function saveMyProfile() {
@@ -1169,15 +1370,35 @@ async function saveMyProfile() {
     // source of truth - the database row saved above is.
     localStorage.setItem('user_profile', JSON.stringify({ ...userProfile, photo: uploadedPhotoBase64 }));
 
-    // 5. ✅ Both succeeded: show a non-blocking success message and
-    // redirect to Discover automatically after 1 second - no button press.
+    // 5. 📡 Best-effort legacy notification via tg.sendData(). NOTE: on a
+    // real Telegram client, calling WebApp.sendData() sends the payload to
+    // the bot's web_app_data handler AND immediately closes the Mini App -
+    // that's Telegram's own platform behavior, not a bug here. The profile
+    // is already safely saved via the HTTP call above, so it's fine if the
+    // app closes right after this - nothing is lost either way.
+    try {
+        tg.sendData(JSON.stringify({ action: 'save_profile', ...userProfile }));
+    } catch (err) {
+        console.warn('tg.sendData unavailable (e.g. testing outside Telegram):', err);
+    }
+
+    // 6. ✅ Show a clean success alert, then redirect to the Home / Swipe
+    // view once the user dismisses it (falls back to a plain alert() if
+    // tg.showAlert isn't available, e.g. when testing in a normal browser).
+    forceProfileEditMode = false;
     applyLanguage();
-    showToast(currentLang === 'am' ? 'ፕሮፋይልዎ በስኬት ተቀምጧል! 🎉' : 'Profile saved! 🎉');
-    setTimeout(() => switchTab('home'), 1000);
+    const successMsg = currentLang === 'am' ? '🎉 ፕሮፋይልዎ በስኬት ተቀምጧል!' : '🎉 Your profile was saved successfully!';
+    if (tg.showAlert) {
+        tg.showAlert(successMsg, () => switchTab('home'));
+    } else {
+        alert(successMsg);
+        switchTab('home');
+    }
 }
 
     function fillProfileForm(p) {
       document.getElementById('my-input-name').value = p.name || '';
+      document.getElementById('my-input-age').value = p.age || '';
       document.getElementById('my-input-age').value = p.age || '';
       document.getElementById('my-input-gender').value = p.gender || 'Female';
       document.getElementById('my-input-phone').value = p.phone || '';
@@ -1208,6 +1429,21 @@ async function saveMyProfile() {
           const result = await res.json();
           if (result.ok && result.exists) {
             fillProfileForm(result.profile);
+            // Real, admin-approved VIP status from the server takes
+            // priority over anything computed locally.
+            localStorage.setItem('user_is_vip', result.profile.is_vip ? 'true' : 'false');
+            // Cache the server profile locally too (even on a device that
+            // never saved it before) so `isSaved` checks and the display
+            // card work correctly right away. Note: the server doesn't
+            // return the photo bytes here, only whether one exists - the
+            // local cache's photo (if any) is preserved via `cached` above.
+            const existingCache = cached ? JSON.parse(cached) : {};
+            localStorage.setItem('user_profile', JSON.stringify({
+              ...existingCache,
+              ...result.profile,
+              user_id: userId,
+              registeredAt: existingCache.registeredAt || new Date().toISOString(),
+            }));
             switchTab('home'); // already has a profile - go straight to Discover
             return;
           } else if (result.ok && !result.exists) {
@@ -1238,4 +1474,3 @@ async function saveMyProfile() {
   </script>
 </body>
 </html>
-  
