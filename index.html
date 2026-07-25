@@ -7,14 +7,14 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --bg-color: #050b18;
-      --card-bg: #0d1b34;
-      --border-color: #1a2c4e;
-      --primary-color: #2575fc;
-      --primary-grad: linear-gradient(135deg, #0052d4, #4364f7, #6fb1fc);
+      --bg-color: #000000;
+      --card-bg: #121214;
+      --border-color: #2c2c2e;
+      --primary-color: #d0d0d3;
+      --primary-grad: linear-gradient(135deg, #3a3a3c, #202022);
       --text-color: #ffffff;
-      --subtext-color: #8da4c4;
-      --input-bg: #091326;
+      --subtext-color: #9a9a9d;
+      --input-bg: #1c1c1e;
       --accent-green: #38ef7d;
       --accent-gold: #ffb703;
       --accent-red: #ff3b5c;
@@ -63,7 +63,7 @@
       flex-shrink: 0;
     }
     .logo { font-size: 18px; font-weight: 800; color: var(--text-color); letter-spacing: 0.5px; }
-    .logo span { color: #4364f7; }
+    .logo span { color: #e5e5e7; }
     .controls-top { display: flex; gap: 6px; align-items: center; }
     .top-btn {
       background: var(--input-bg); border: 1px solid var(--border-color);
@@ -127,29 +127,75 @@
     }
     .btn:active { transform: scale(0.9); }
     .btn-dislike { background: var(--card-bg); color: #ff4757; border: 2px solid #ff4757; }
-    .btn-like { background: var(--primary-grad); color: white; box-shadow: 0 4px 20px rgba(67, 100, 247, 0.5); }
+    .btn-like { background: var(--primary-grad); color: white; box-shadow: 0 4px 20px rgba(255, 255, 255, 0.25); }
 
     /* Form Container */
     .form-container {
-      width: 100%; max-width: 330px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 120px;
+      width: 100%; max-width: 330px; display: flex; flex-direction: column; gap: 14px; padding-bottom: 120px;
     }
 
+    /* "Create Profile" header with decorative progress dashes */
+    .form-header-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 4px; gap: 14px;
+    }
+    .form-title-lg { font-size: 24px; font-weight: 800; color: var(--text-color); white-space: nowrap; }
+    .progress-dashes { display: flex; gap: 5px; flex-shrink: 0; }
+    .progress-dash { width: 28px; height: 4px; border-radius: 4px; background: var(--border-color); }
+    .progress-dash.active { background: var(--text-color); }
+
     .form-section-title {
-      font-size: 13px; font-weight: bold; color: #4364f7;
+      font-size: 13px; font-weight: bold; color: #e5e5e7;
       margin-top: 8px; border-bottom: 1px dashed var(--border-color); padding-bottom: 4px;
     }
 
-    .form-group { display: flex; flex-direction: column; gap: 5px; text-align: left; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+    .form-hint { font-size: 12px; color: var(--subtext-color); padding: 0 6px; }
     label { font-size: 13px; color: var(--subtext-color); font-weight: 500; }
+
+    /* Pill-shaped inputs (rounded like a capsule, no boxed label above) */
     input, textarea, select {
-      background: var(--input-bg); border: 1px solid var(--border-color); padding: 12px; color: var(--text-color);
-      border-radius: 12px; font-size: 14px; outline: none;
+      background: var(--input-bg); border: 1px solid var(--border-color); padding: 16px 20px; color: var(--text-color);
+      border-radius: 30px; font-size: 15px; outline: none; width: 100%;
     }
-    input:focus, textarea:focus, select:focus { border-color: #4364f7; }
+    textarea { border-radius: 22px; }
+    input:focus, textarea:focus, select:focus { border-color: #e5e5e7; }
+    input::placeholder, textarea::placeholder { color: var(--subtext-color); }
+
+    select {
+      appearance: none; -webkit-appearance: none; -moz-appearance: none; cursor: pointer;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239a9a9d' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+      background-repeat: no-repeat; background-position: right 20px center; padding-right: 46px;
+    }
+
+    /* Fields with a leading icon inside the pill, e.g. 📍 city, 🎂 DOB */
+    .pill-field { position: relative; }
+    .pill-field .pill-icon {
+      position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+      font-size: 16px; pointer-events: none; z-index: 1;
+    }
+    .pill-field input, .pill-field select { padding-left: 48px; }
+
+    /* Gender toggle pills (radio-style, side by side) */
+    .gender-toggle-row { display: flex; gap: 12px; }
+    .gender-pill {
+      flex: 1; display: flex; align-items: center; gap: 10px;
+      background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 30px;
+      padding: 14px 18px; color: var(--text-color); font-size: 15px; font-weight: 600; cursor: pointer;
+    }
+    .gender-pill.active { border-color: #e5e5e7; background: rgba(255, 255, 255, 0.14); }
+    .gender-radio-dot {
+      width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--subtext-color);
+      display: inline-block; position: relative; flex-shrink: 0;
+    }
+    .gender-pill.active .gender-radio-dot { border-color: #e5e5e7; }
+    .gender-pill.active .gender-radio-dot::after {
+      content: ''; position: absolute; inset: 3px; border-radius: 50%; background: #e5e5e7;
+    }
 
     .action-input-btn {
       background: var(--input-bg); border: 1px solid var(--border-color);
-      color: #6fb1fc; padding: 11px; border-radius: 12px;
+      color: #c7c7cc; padding: 11px; border-radius: 30px;
       font-size: 13px; font-weight: 600; cursor: pointer; text-align: center;
       display: flex; align-items: center; justify-content: center; gap: 6px;
     }
@@ -158,17 +204,20 @@
     .file-upload-wrapper {
       display: flex; flex-direction: column; gap: 8px; align-items: center;
       background: var(--input-bg); border: 2px dashed var(--border-color); padding: 16px;
-      border-radius: 14px; cursor: pointer; text-align: center;
+      border-radius: 22px; cursor: pointer; text-align: center;
     }
     .preview-img {
       width: 70px; height: 70px; border-radius: 50%; object-fit: cover; display: none;
-      border: 2px solid #4364f7;
+      border: 2px solid #e5e5e7;
     }
 
     .save-btn {
-      background: var(--primary-grad); color: white; border: none; padding: 14px;
-      border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px;
-      box-shadow: 0 4px 15px rgba(67, 100, 247, 0.3);
+      background: var(--primary-grad); color: white; border: none; padding: 16px;
+      border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px;
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3); transition: opacity 0.15s, box-shadow 0.15s;
+    }
+    .save-btn:disabled {
+      background: var(--input-bg); color: var(--subtext-color); box-shadow: none; cursor: not-allowed;
     }
 
     .matches-container { width: 100%; max-width: 330px; display: none; flex-direction: column; gap: 10px; padding-bottom: 100px; }
@@ -187,7 +236,7 @@
       padding: 14px 0; border-top: 1px solid var(--border-color); z-index: 10; flex-shrink: 0;
     }
     .nav-item { color: var(--subtext-color); font-size: 20px; cursor: pointer; }
-    .nav-item.active { color: #6fb1fc; }
+    .nav-item.active { color: #c7c7cc; }
 
     /* VIP Modal Styles */
     .vip-modal-overlay {
@@ -318,7 +367,7 @@
     .edit-profile-btn {
       width: 100%; background: var(--primary-grad); color: white; border: none;
       padding: 14px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer;
-      box-shadow: 0 4px 15px rgba(67, 100, 247, 0.3);
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
     }
   </style>
 </head>
@@ -347,7 +396,7 @@
         </div>
         <div class="card-info">
           <div style="font-size: 22px; font-weight: bold;" id="card-name">...</div>
-          <div style="font-size: 13px; color: #6fb1fc; margin-top: 3px;" id="card-religion-zodiac">...</div>
+          <div style="font-size: 13px; color: #c7c7cc; margin-top: 3px;" id="card-religion-zodiac">...</div>
           <div style="font-size: 13px; color: #cbd5e1; margin-top: 5px; line-height: 1.3;" id="card-bio">...</div>
         </div>
       </div>
@@ -372,43 +421,58 @@
 
     <!-- 3. PROFILE REGISTER/EDIT VIEW -->
     <div id="profile-view" class="form-container">
-      <h3 style="margin-bottom: 5px;" id="txt-edit-title">Register First</h3>
-      
+      <div class="form-header-row">
+        <h3 class="form-title-lg" id="txt-edit-title">Register First</h3>
+        <div class="progress-dashes">
+          <span class="progress-dash active"></span>
+          <span class="progress-dash"></span>
+          <span class="progress-dash"></span>
+        </div>
+      </div>
+
       <!-- User Info -->
       <div class="form-group">
-        <label id="lbl-name">Name</label>
-        <input type="text" id="my-input-name" placeholder="Name">
+        <input type="text" id="my-input-name" placeholder="Name" oninput="updateContinueButtonState()">
       </div>
 
       <div class="form-group">
-        <label id="lbl-age">Age</label>
-        <input type="number" id="my-input-age" placeholder="18">
+        <textarea id="my-input-bio" rows="2" placeholder="I like movies..." maxlength="120"></textarea>
+        <div class="form-hint" id="txt-bio-hint">Example: Designer from Dubai. Love surfing. Max. 120 characters</div>
       </div>
 
-      <div class="form-group">
-        <label id="lbl-gender">Gender</label>
-        <select id="my-input-gender">
-          <option value="Female" id="opt-female">Female</option>
-          <option value="Male" id="opt-male">Male</option>
-        </select>
+      <div class="form-group pill-field">
+        <span class="pill-icon">🎂</span>
+        <input type="number" id="my-input-age" placeholder="Age (18+)" oninput="updateContinueButtonState()">
       </div>
 
-      <!-- Contact & Location -->
-      <div class="form-section-title" id="txt-contact-loc-title">📍 Location & Contact</div>
-
-      <div class="form-group">
-        <label id="lbl-phone">Phone Number</label>
-        <input type="text" id="my-input-phone" placeholder="+251912345678">
-        <button type="button" class="action-input-btn" id="btn-share-phone" onclick="requestTelegramContact()">
-          📱 Share Telegram Phone Number
+      <div class="form-group pill-field">
+        <span class="pill-icon">📍</span>
+        <input type="text" id="my-input-location" placeholder="Your city">
+        <button type="button" class="action-input-btn" id="btn-gps-location" onclick="requestGPSLocation()">
+          📍 Get Live GPS Location
         </button>
       </div>
 
       <div class="form-group">
-        <label id="lbl-location">Location</label>
-        <input type="text" id="my-input-location" placeholder="Addis Ababa, Ethiopia">
-        <button type="button" class="action-input-btn" id="btn-gps-location" onclick="requestGPSLocation()">
-          📍 Get Live GPS Location
+        <label id="lbl-gender-hdr" style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">Gender</label>
+        <div class="gender-toggle-row">
+          <button type="button" class="gender-pill" id="gender-btn-male" onclick="selectGender('Male')">
+            <span class="gender-radio-dot"></span> <span id="lbl-gender-male">Male</span>
+          </button>
+          <button type="button" class="gender-pill active" id="gender-btn-female" onclick="selectGender('Female')">
+            <span class="gender-radio-dot"></span> <span id="lbl-gender-female">Female</span>
+          </button>
+        </div>
+        <input type="hidden" id="my-input-gender" value="Female">
+  </div>
+  
+      <!-- Contact -->
+      <div class="form-section-title" id="txt-contact-loc-title">📞 Contact</div>
+
+      <div class="form-group">
+        <input type="text" id="my-input-phone" placeholder="+251912345678">
+        <button type="button" class="action-input-btn" id="btn-share-phone" onclick="requestTelegramContact()">
+          📱 Share Telegram Phone Number
         </button>
       </div>
 
@@ -476,13 +540,7 @@
         <input type="file" id="my-file-input" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
       </div>
 
-      <!-- Bio -->
-      <div class="form-group">
-        <label id="lbl-bio">About Me (Bio)</label>
-        <textarea id="my-input-bio" rows="3" placeholder="Tell something about yourself..."></textarea>
-      </div>
-
-      <button class="save-btn" id="btn-save" onclick="saveMyProfile()">Save Profile</button>
+      <button class="save-btn" id="btn-save" onclick="saveMyProfile()">Continue</button>
     </div>
 
     <!-- 3b. PROFILE DISPLAY VIEW (premium card, shown once a profile is saved) -->
@@ -617,7 +675,7 @@
     // base64 photo will always exceed, so the photo is uploaded straight
     // to the backend over HTTP instead. Point this at your deployed
     // backend URL (e.g. your Render service), with no trailing slash.
-    const BACKEND_URL = "https://true-love-dating.onrender.com";
+    const BACKEND_URL = "https://YOUR-BACKEND-URL.onrender.com";
 
     const FREE_DAILY_PROFILE_LIMIT = 25;
     const FREE_DAILY_CHAT_LIMIT = 10;
@@ -683,8 +741,10 @@
         relManual: "✍️ በጽሑፍ ለማስገባት",
         placeRel: "ሃይማኖትዎን ይጻፉ...",
         placeName: "ስም ያስገቡ",
-        placeLocation: "አዲስ አበባ፣ ኢትዮጵያ",
+        placeAge: "እድሜ (18+)",
+        placeLocation: "የከተማዎን ስም ያስገቡ",
         placeBio: "ስለራስዎ የሆነ ነገር ይጻፉ...",
+        bioHint: "ምሳሌ: ዲዛይነር ከዱባይ። መዋኘት እወዳለሁ። ቢበዛ 120 ፊደላት",
         btnSharePhone: "📱 የቴሌግራም ስልክ ቁጥር ያጋሩ",
         btnGpsLocation: "📍 የቀጥታ ጂፒኤስ ቦታ ያግኙ",
         genders: { female: "ሴት", male: "ወንድ" },
@@ -739,8 +799,10 @@
         relManual: "✍️ Type manually",
         placeRel: "Type your religion...",
         placeName: "Enter Name",
-        placeLocation: "Addis Ababa, Ethiopia",
+        placeAge: "Age (18+)",
+        placeLocation: "Your city",
         placeBio: "Tell something about yourself...",
+        bioHint: "Example: Designer from Dubai. Love surfing. Max. 120 characters",
         btnSharePhone: "📱 Share Telegram Phone Number",
         btnGpsLocation: "📍 Get Live GPS Location",
         genders: { female: "Female", male: "Male" },
@@ -952,7 +1014,8 @@
       } else {
         tg.showAlert(currentLang === 'am' ? "እባክዎን ስልክ ቁጥርዎን በጽሑፍ ያስገቡ" : "Please type your phone number manually.");
       }
-    
+    }
+
     function requestGPSLocation() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -1054,23 +1117,22 @@
       document.getElementById('lang-btn').innerText = currentLang === 'am' ? "🇬🇧 EN" : "🇪🇹 AM";
       document.getElementById('txt-matches-title').innerText = t.matchesTitle;
       document.getElementById('txt-edit-title').innerText = isSaved ? t.editTitleSaved : t.editTitle;
-      document.getElementById('lbl-name').innerText = t.lblName;
-      document.getElementById('lbl-age').innerText = t.lblAge;
-      document.getElementById('lbl-gender').innerText = t.lblGender;
+      document.getElementById('lbl-gender-hdr').innerText = t.lblGender;
+      document.getElementById('lbl-gender-male').innerText = t.genders.male;
+      document.getElementById('lbl-gender-female').innerText = t.genders.female;
+      document.getElementById('txt-bio-hint').innerText = t.bioHint;
       document.getElementById('txt-contact-loc-title').innerText = t.contactLocTitle;
-      document.getElementById('lbl-phone').innerText = t.lblPhone;
-      document.getElementById('lbl-location').innerText = t.lblLocation;
       document.getElementById('txt-pref-title').innerText = t.prefTitle;
       document.getElementById('lbl-looking-for').innerText = t.lblLookingFor;
       document.getElementById('lbl-pref-age').innerText = t.lblPrefAge;
       document.getElementById('lbl-religion').innerText = t.lblReligion;
       document.getElementById('lbl-zodiac').innerText = t.lblZodiac;
       document.getElementById('lbl-photo').innerText = t.lblPhoto;
-      document.getElementById('lbl-bio').innerText = t.lblBio;
       document.getElementById('btn-save').innerText = isSaved ? t.btnSaveEdit : t.btnSave;
       document.getElementById('opt-rel-manual').innerText = t.relManual;
       
       document.getElementById('my-input-name').placeholder = t.placeName;
+      document.getElementById('my-input-age').placeholder = t.placeAge;
       document.getElementById('my-input-location').placeholder = t.placeLocation;
       document.getElementById('my-input-bio').placeholder = t.placeBio;
       document.getElementById('my-input-religion-manual').placeholder = t.placeRel;
@@ -1082,8 +1144,6 @@
         document.getElementById('txt-file-status').innerText = t.fileStatus;
       }
 
-      document.getElementById('opt-female').innerText = t.genders.female;
-      document.getElementById('opt-male').innerText = t.genders.male;
       document.getElementById('opt-look-male').innerText = t.looking.male;
       document.getElementById('opt-look-female').innerText = t.looking.female;
       document.getElementById('opt-look-both').innerText = t.looking.both;
@@ -1399,8 +1459,7 @@ async function saveMyProfile() {
     function fillProfileForm(p) {
       document.getElementById('my-input-name').value = p.name || '';
       document.getElementById('my-input-age').value = p.age || '';
-      document.getElementById('my-input-age').value = p.age || '';
-      document.getElementById('my-input-gender').value = p.gender || 'Female';
+      selectGender(p.gender || 'Female');
       document.getElementById('my-input-phone').value = p.phone || '';
       document.getElementById('my-input-location').value = p.location || '';
       document.getElementById('my-pref-looking').value = p.lookingFor || p.looking_for || 'Male';
@@ -1413,6 +1472,25 @@ async function saveMyProfile() {
         preview.src = p.photo;
         preview.style.display = 'block';
       }
+      updateContinueButtonState();
+    }
+
+    // Gender toggle pills (replaces the old <select>) - keeps the same
+    // hidden #my-input-gender value so saveMyProfile()/loadMyProfile() work unchanged.
+    function selectGender(value) {
+      document.getElementById('my-input-gender').value = value;
+      document.getElementById('gender-btn-male').classList.toggle('active', value === 'Male');
+      document.getElementById('gender-btn-female').classList.toggle('active', value === 'Female');
+      updateContinueButtonState();
+    }
+
+    // Enables/greys out the Continue button based on the two required
+    // fields (Name + Age), mirroring the reference design's disabled state.
+    function updateContinueButtonState() {
+      const name = document.getElementById('my-input-name').value.trim();
+      const age = document.getElementById('my-input-age').value.trim();
+      const saveBtn = document.getElementById('btn-save');
+      saveBtn.disabled = !(name && age);
     }
 
     async function loadMyProfile() {
@@ -1470,6 +1548,7 @@ async function saveMyProfile() {
     applyTheme();
     applyLanguage();
     renderProfile();
+    updateContinueButtonState();
     loadMyProfile();
   </script>
 </body>
