@@ -34,7 +34,7 @@ MAX_PHOTO_BYTES = 2 * 1024 * 1024  # 2 MB safety cap on uploaded photos
 DB_PATH = os.environ.get("DB_PATH", "database.db")
 
 # Your own Telegram numeric user id (chat with @userinfobot to get it).
-# VIP payment screenshots get forwarded here for manual review.
+# User reports get forwarded here for manual review.
 ADMIN_CHAT_ID = os.environ.get("ADMIN_CHAT_ID")
 
 bot = telebot.TeleBot(BOT_TOKEN)
@@ -95,27 +95,7 @@ def init_db():
                 zodiac TEXT,
                 bio TEXT,
                 photo_base64 TEXT,
-                is_vip INTEGER DEFAULT 0,
                 registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-        )
-        # Migration: CREATE TABLE IF NOT EXISTS above won't add new columns
-        # to a users table that already existed before is_vip was introduced.
-        cursor.execute("PRAGMA table_info(users)")
-        existing_cols = {row[1] for row in cursor.fetchall()}
-        if "is_vip" not in existing_cols:
-            cursor.execute("ALTER TABLE users ADD COLUMN is_vip INTEGER DEFAULT 0")
-
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS vip_requests (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                package TEXT,
-                photo_base64 TEXT,
-                status TEXT DEFAULT 'pending',
-                submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """
         )
@@ -270,172 +250,6 @@ def upload_photo():
     return jsonify({"ok": True})
 
 
-# 4a2. VIP PAYMENT RECEIPT ENDPOINT ------------------------------------------
-# The frontend previously just showed a fake "sent!" message without
-# actually sending anything anywhere. This endpoint receives the receipt
-# screenshot, stores a permanent record of it, and forwards the photo to
-# the admin's Telegram chat so a human can review and approve it.
-@app.route("/submit_vip_receipt", methods=["POST", "OPTIONS"])
-def submit_vip_receipt():
-    if request.method == "OPTIONS":
-        return "", 204
-
-    payload = request.get_json(silent=True) or {}
-    user_id = payload.get("user_id")
-    package = payload.get("package", "")
-    photo_b64 = payload.get("photo_base64")
-
-    if not user_id or not photo_b64:
-        return jsonify({"ok": False, "error": "user_id and photo_base64 are required"}), 400
-
-    if "," in photo_b64:
-        photo_b64 = photo_b64.split(",", 1)[1]
-
-    try:
-        raw = base64.b64decode(photo_b64, validate=True)
-    except (binascii.Error, ValueError):
-        return jsonify({"ok": False, "error": "invalid base64 data"}), 400
-
-    if len(raw) > MAX_PHOTO_BYTES:
-        return jsonify({"ok": False, "error": "photo too large (max 2MB)"}), 413
-
-    # 1. Keep a permanent record in the database, regardless of whether
-    # the Telegram notification below succeeds.
-    conn = get_db()
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO vip_requests (user_id, package, photo_base64) VALUES (?, ?, ?)",
-            (user_id, package, photo_b64),
-        )
-        request_id = cursor.lastrowid
-        conn.commit()
-    except Exception as e:
-        print(f"submit_vip_receipt DB error: {e}")
-        return jsonify({"ok": False, "error": "database error"}), 500
-    finally:
-        conn.close()
-
-    # 2. Forward the screenshot to the admin so it can actually be reviewed,
-    # with inline Approve/Reject buttons wired directly to this user_id
-    # (request_id above is kept only as an audit record in vip_requests).
-    if not ADMIN_CHAT_ID:
-        print("ADMIN_CHAT_ID is not set - VIP receipt was saved but NOT forwarded to an admin.")
-        # Still return ok: the record is saved, it just wasn't pushed to Telegram yet.
-        return jsonify({"ok": True, "warning": "admin not configured"})
-
-    # Best-effort lookup of the user's display name / username for the
-    # admin message. Not fatal if it fails - we still have the user_id.
-    display_name = str(user_id)
-    username = ""
-    try:
-        chat = bot.get_chat(user_id)
-        if chat.first_name:
-            display_name = chat.first_name
-            if chat.last_name:
-                display_name += f" {chat.last_name}"
-        username = chat.username or ""
-    except Exception as e:
-        print(f"submit_vip_receipt get_chat error: {e}")
-
-    markup = InlineKeyboardMarkup()
-    markup.add(
-        InlineKeyboardButton("✅ Approve VIP", callback_data=f"vip_approve_{user_id}"),
-        InlineKeyboardButton("❌ Reject VIP", callback_data=f"vip_reject_{user_id}"),
-    )
-
-    caption = (
-        f"👑 New VIP payment receipt\n"
-        f"Name: {display_name}\n"
-        f"Telegram ID: {user_id}\n"
-        f"Username: {'@' + username if username else 'N/A'}\n"
-        f"Package: {package}"
-    )
-
-    try:
-        bot.send_photo(ADMIN_CHAT_ID, BytesIO(raw), caption=caption, reply_markup=markup)
-    except Exception as e:
-        print(f"submit_vip_receipt admin notify error: {e}")
-        # The record is already saved in vip_requests, so this isn't fatal -
-        # you can still review it from the database even if the push failed.
-        return jsonify({"ok": True, "warning": "saved but admin notification failed"})
-
-    return jsonify({"ok": True})
-
-
-# 4a3. VIP APPROVE/REJECT CALLBACK -------------------------------------------
-# Handles taps on the "✅ Approve VIP" / "❌ Reject VIP" buttons attached to
-# the admin notification above. callback_data is vip_approve_<user_id> or
-# vip_reject_<user_id>, so the decision is keyed directly off the user_id
-# that was embedded in the button - no extra DB lookup needed to act on it.
-@bot.callback_query_handler(
-    func=lambda call: call.data
-    and (call.data.startswith("vip_approve_") or call.data.startswith("vip_reject_"))
-)
-def handle_vip_decision(call):
-    if call.data.startswith("vip_approve_"):
-        action = "approve"
-        target_user_id_str = call.data[len("vip_approve_"):]
-    else:
-        action = "reject"
-        target_user_id_str = call.data[len("vip_reject_"):]
-
-    try:
-        target_user_id = int(target_user_id_str)
-    except ValueError:
-        bot.answer_callback_query(call.id, "Invalid user id")
-        return
-
-    conn = get_db()
-    try:
-        cursor = conn.cursor()
-        if action == "approve":
-            cursor.execute(
-                "INSERT INTO users (user_id, is_vip) VALUES (?, 1) "
-                "ON CONFLICT(user_id) DO UPDATE SET is_vip = 1",
-                (target_user_id,),
-            )
-        # Best-effort: mark this user's most recent pending request as
-        # decided, purely for the /reports-style audit trail - the actual
-        # approval above is already keyed directly off target_user_id.
-        cursor.execute(
-            "UPDATE vip_requests SET status = ? "
-            "WHERE id = (SELECT id FROM vip_requests WHERE user_id = ? AND status = 'pending' "
-            "ORDER BY submitted_at DESC LIMIT 1)",
-            ("approved" if action == "approve" else "rejected", target_user_id),
-        )
-        conn.commit()
-    except Exception as e:
-        print(f"handle_vip_decision DB error: {e}")
-        bot.answer_callback_query(call.id, "Server error")
-        return
-    finally:
-        conn.close()
-
-    if action == "approve":
-        user_message = "🎉 Congratulations! Your VIP status has been approved."
-        admin_note = "✅ Approved"
-    else:
-        user_message = "❌ Sorry, your VIP receipt could not be verified. Please try again."
-        admin_note = "❌ Rejected"
-
-    try:
-        bot.send_message(target_user_id, user_message)
-    except Exception as e:
-        print(f"handle_vip_decision notify error: {e}")
-
-    try:
-        bot.answer_callback_query(call.id, admin_note)
-        original_caption = call.message.caption or ""
-        bot.edit_message_caption(
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            caption=f"{original_caption}\n\n{admin_note}",
-        )
-    except Exception as e:
-        print(f"handle_vip_decision UI update error: {e}")
-
-
 # 4b. SAVE PROFILE ENDPOINT (replaces tg.sendData() for the text fields) ---
 # tg.sendData() closes the Mini App the instant it's called, which makes it
 # impossible for the frontend to reliably show a success message and then
@@ -532,7 +346,7 @@ def save_profile():
 # local storage happens to be cached on.
 PROFILE_COLUMNS = [
     "name", "age", "gender", "phone", "location",
-    "looking_for", "pref_age", "religion", "zodiac", "bio", "is_vip",
+    "looking_for", "pref_age", "religion", "zodiac", "bio",
 ]
 
 
@@ -554,7 +368,6 @@ def get_profile(user_id):
         return jsonify({"ok": True, "exists": False})
 
     profile = dict(zip(PROFILE_COLUMNS, row[:-1]))
-    profile["is_vip"] = bool(profile["is_vip"])
     profile["hasPhoto"] = bool(row[-1])
     return jsonify({"ok": True, "exists": True, "profile": profile})
 
@@ -647,4 +460,3 @@ if __name__ == "__main__":
     threading.Thread(target=run_flask, daemon=True).start()
     print("True Love Bot is running...")
     bot.infinity_polling(skip_pending=True)
-    
