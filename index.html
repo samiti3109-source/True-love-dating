@@ -71,11 +71,6 @@
       font-size: 12px; cursor: pointer; font-weight: 500;
     }
 
-    .vip-badge {
-      background: linear-gradient(135deg, #ffb703, #fb8500);
-      color: #000; font-weight: bold; padding: 3px 8px; border-radius: 12px; font-size: 10px;
-    }
-
     .container {
       flex: 1;
       display: flex;
@@ -113,11 +108,6 @@
       position: relative; z-index: 2; padding: 20px 18px;
       background: linear-gradient(to top, rgba(5, 11, 24, 0.95) 50%, rgba(5, 11, 24, 0.4) 85%, transparent);
       color: #ffffff; text-align: left;
-    }
-
-    .limit-counter {
-      font-size: 12px; color: var(--subtext-color); margin-top: 10px;
-      background: var(--input-bg); padding: 5px 12px; border-radius: 10px; border: 1px solid var(--border-color);
     }
 
     .actions { display: flex; gap: 25px; margin-top: 15px; margin-bottom: 20px; flex-shrink: 0; }
@@ -238,66 +228,6 @@
     .nav-item { color: var(--subtext-color); font-size: 20px; cursor: pointer; }
     .nav-item.active { color: #c7c7cc; }
 
-    /* VIP Modal Styles */
-    .vip-modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);
-      z-index: 100; display: none; justify-content: center; align-items: flex-end;
-    }
-
-    .vip-modal-content {
-      width: 100%; max-width: 420px; max-height: 90vh;
-      background: var(--bg-color); border-top-left-radius: 24px; border-top-right-radius: 24px;
-      border: 1px solid var(--border-color); padding: 20px; overflow-y: auto;
-      display: flex; flex-direction: column; gap: 15px;
-      box-shadow: 0 -10px 40px rgba(0,0,0,0.8); animation: slideUp 0.3s ease-out;
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-
-    .modal-top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-    .close-modal-btn {
-      background: var(--card-bg); border: 1px solid var(--border-color);
-      color: var(--text-color); width: 30px; height: 30px; border-radius: 50%;
-      cursor: pointer; font-size: 16px; font-weight: bold;
-    }
-
-    .pkg-card {
-      background: var(--card-bg); border: 1px solid var(--border-color);
-      border-radius: 16px; padding: 14px 18px; display: flex;
-      justify-content: space-between; align-items: center; cursor: pointer;
-    }
-    .pkg-card.selected { border: 2px solid var(--accent-red); }
-    .pkg-info h4 { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
-    .pkg-info p { font-size: 12px; color: var(--subtext-color); }
-    .pkg-price { font-size: 18px; font-weight: 800; color: var(--accent-red); }
-
-    .payment-card {
-      background: var(--card-bg); border: 1px solid var(--border-color);
-      border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px;
-    }
-
-    .account-box {
-      background: var(--input-bg); border: 1px solid var(--border-color);
-      border-radius: 12px; padding: 12px; font-size: 13px; line-height: 1.8;
-    }
-
-    .upload-btn {
-      background: var(--input-bg); border: 1px dashed var(--subtext-color);
-      color: var(--text-color); padding: 12px; border-radius: 12px;
-      font-size: 13px; font-weight: 600; text-align: center; cursor: pointer;
-    }
-
-    .submit-btn {
-      background: var(--accent-red); color: white; border: none;
-      padding: 14px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer;
-    }
-
-    .preview-ss { max-height: 100px; object-fit: contain; border-radius: 8px; display: none; }
-
     /* Report button on the swipe card */
     .report-flag-btn {
       position: absolute; top: 14px; right: 14px; z-index: 3;
@@ -321,12 +251,6 @@
     .profile-cover-banner {
       width: 100%; height: 110px; border-radius: 26px 26px 0 0;
       background: var(--primary-grad); position: relative; overflow: hidden;
-    }
-    .premium-vip-ribbon {
-      position: absolute; top: 14px; right: 14px; z-index: 2;
-      background: linear-gradient(135deg, #ffb703, #fb8500); color: #000;
-      font-weight: 800; font-size: 12px; padding: 5px 12px; border-radius: 20px;
-      box-shadow: 0 3px 10px rgba(251, 133, 0, 0.5);
     }
     .profile-avatar-wrap {
       display: flex; justify-content: center; margin-top: -50px; position: relative; z-index: 2;
@@ -375,12 +299,11 @@
 
   <!-- App Header -->
   <div class="header">
-    <div class="logo">TRUE <span>LOVE</span> <span id="user-status-tag" class="vip-badge" style="display:none;">👑 VIP</span></div>
+    <div class="logo">TRUE <span>LOVE</span></div>
     <div class="controls-top">
       <button class="top-btn" onclick="toggleMode()" id="mode-btn">🌙 Dark</button>
       <button class="top-btn" onclick="toggleLanguage()" id="lang-btn">🇪🇹 AM</button>
       <button class="top-btn" onclick="toggleTheme()">🎨 Color</button>
-      <button class="top-btn" style="background: linear-gradient(135deg, #ffb703, #fb8500); color:#000; font-weight:bold;" onclick="openVIPModal()">👑 VIP</button>
     </div>
   </div>
 
@@ -400,9 +323,6 @@
           <div style="font-size: 13px; color: #cbd5e1; margin-top: 5px; line-height: 1.3;" id="card-bio">...</div>
         </div>
       </div>
-      
-      <!-- Counter Tag -->
-      <div id="view-counter-tag" class="limit-counter">የዛሬ ያዩት፡ 0/25 ፕሮፋይል</div>
 
       <div class="actions">
         <button class="btn btn-dislike" onclick="nextProfile('pass')">✖</button>
@@ -414,7 +334,6 @@
     <div id="matches-view" class="matches-container">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
         <h3 id="txt-matches-title">Matches</h3>
-        <span id="chat-counter-tag" class="limit-counter">የዛሬ ቻት፡ 0/10</span>
       </div>
       <div id="matches-list"></div>
     </div>
@@ -464,8 +383,8 @@
           </button>
         </div>
         <input type="hidden" id="my-input-gender" value="Female">
-  </div>
-  
+      </div>
+
       <!-- Contact -->
       <div class="form-section-title" id="txt-contact-loc-title">📞 Contact</div>
 
@@ -546,9 +465,7 @@
     <!-- 3b. PROFILE DISPLAY VIEW (premium card, shown once a profile is saved) -->
     <div id="profile-display-view" class="profile-display-container">
       <div class="premium-card">
-        <div class="profile-cover-banner">
-          <span id="pd-vip-ribbon" class="premium-vip-ribbon" style="display:none;">👑 VIP</span>
-        </div>
+        <div class="profile-cover-banner"></div>
         <div class="profile-avatar-wrap">
           <img id="pd-photo" class="profile-avatar-lg" src="" alt="Profile photo"
                onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/847/847969.png';">
@@ -590,82 +507,6 @@
     <div class="nav-item active" id="nav-profile" onclick="switchTab('profile')">👤</div>
   </div>
 
-  <!-- VIP PACKAGES MODAL -->
-  <div class="vip-modal-overlay" id="vip-modal">
-    <div class="vip-modal-content">
-      
-      <div class="modal-top-bar">
-        <div style="font-size: 18px; font-weight: 800; color: var(--accent-gold);">👑 TRUE LOVE VIP</div>
-        <button class="close-modal-btn" onclick="closeVIPModal()">✕</button>
-      </div>
-
-      <h3 style="text-align: center; font-size: 18px;" id="txt-vip-main-title">የቪአይፒ ፓኬጅ ይምረጡ</h3>
-
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <div class="pkg-card" onclick="selectVIPPackage('1 Month (199 Birr)', '1 ወር (199 ብር)', this)">
-          <div class="pkg-info">
-            <h4 id="v-p1-title">የ1 ወር ቪአይፒ</h4>
-            <p id="v-p1-desc">ለ30 ቀናት ሙሉ አገልግሎት</p>
-          </div>
-          <div class="pkg-price" id="v-p1-price">199 ብር</div>
-        </div>
-
-        <div class="pkg-card" onclick="selectVIPPackage('3 Months (499 Birr)', '3 ወር (499 ብር)', this)">
-          <div class="pkg-info">
-            <h4 id="v-p2-title">የ3 ወር ቪአይፒ</h4>
-            <p id="v-p2-desc">ለ90 ቀናት (ቅናሽ ያለው)</p>
-          </div>
-          <div class="pkg-price" id="v-p2-price">499 ብር</div>
-        </div>
-
-        <div class="pkg-card selected" id="default-vip-card" onclick="selectVIPPackage('6 Months (899 Birr)', '6 ወር (899 ብር)', this)">
-          <div class="pkg-info">
-            <h4 id="v-p3-title">የ6 ወር ቪአይፒ</h4>
-            <p id="v-p3-desc">ለ180 ቀናት ሙሉ አገልግሎት</p>
-          </div>
-          <div class="pkg-price" id="v-p3-price">899 ብር</div>
-        </div>
-
-        <div class="pkg-card" onclick="selectVIPPackage('1 Year (1699 Birr)', '1 ዓመት (1699 ብር)', this)">
-          <div class="pkg-info">
-            <h4 id="v-p4-title">የ1 ዓመት ቪአይፒ</h4>
-            <p id="v-p4-desc">ለ365 ቀናት (ትልቅ ቅናሽ)</p>
-          </div>
-          <div class="pkg-price" id="v-p4-price">1699 ብር</div>
-        </div>
-      </div>
-
-      <div class="payment-card">
-        <h4 style="font-size: 15px;" id="txt-pay-title">የአከፋፈል መመሪያ</h4>
-        
-        <div style="font-size: 13px;">
-          <span id="txt-pay-prefix">እባክዎ የመረጡትን</span> <span id="selected-pkg-label" style="color: var(--accent-red); font-weight: bold;">6 Months (899 Birr)</span> <span id="txt-pay-suffix">ክፍያ በሚከተሉት አካውንቶች ያስገቡ፡</span>
-        </div>
-
-        <div class="account-box">
-          <strong id="txt-cbe-label">ንግድ ባንክ (CBE):</strong> 1000630380662<br>
-          <strong id="txt-tele-label">ቴሌብር (telebirr):</strong> 0945211516<br>
-          <strong id="txt-name-label">ስም:</strong> ሳሙኤል teketel
-        </div>
-
-        <div style="font-size: 12px; color: var(--subtext-color);" id="txt-proof-desc">
-          ክፍያውን ከፈጸሙ በኋላ የስክሪንሾት ፎቶውን እዚህ ያያይዙ፡
-        </div>
-
-        <div class="upload-btn" onclick="document.getElementById('vip-ss-file').click()">
-          📸 <span id="txt-select-btn">ስክሪንሾት ለመምረጥ እዚህ ይጫኑ</span>
-        </div>
-        <input type="file" id="vip-ss-file" accept="image/*" style="display:none;" onchange="handleVIPReceipt(event)">
-        <img id="vip-ss-preview" class="preview-ss" alt="Receipt Preview">
-
-        <button class="submit-btn" onclick="submitVIPReceipt()">
-          ✅ <span id="txt-submit-btn">ማረጋገጫውን ላክ</span>
-        </button>
-      </div>
-
-    </div>
-  </div>
-
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
@@ -675,15 +516,10 @@
     // base64 photo will always exceed, so the photo is uploaded straight
     // to the backend over HTTP instead. Point this at your deployed
     // backend URL (e.g. your Render service), with no trailing slash.
-    const BACKEND_URL = "https://true-love-dating.onrender.com";
-
-    const FREE_DAILY_PROFILE_LIMIT = 25;
-    const FREE_DAILY_CHAT_LIMIT = 10;
-    const VIP_TRIAL_DAYS = 3; 
+    const BACKEND_URL = "https://YOUR-BACKEND-URL.onrender.com";
 
     let uploadedPhotoBase64 = "";
     let selectedPhotoFile = null;
-    let vipReceiptBase64 = "";
 
     // A non-blocking toast, used for the "saved, redirecting..." message.
     // tg.showAlert() requires the user to tap "Close" before anything else
@@ -704,16 +540,6 @@
       toast.style.display = 'block';
       clearTimeout(toast._hideTimer);
       toast._hideTimer = setTimeout(() => { toast.style.display = 'none'; }, 2500);
-    }
-    let selectedVIPPkgEn = "6 Months (899 Birr)";
-    let selectedVIPPkgAm = "6 ወር (899 ብር)";
-
-    const todayStr = new Date().toISOString().slice(0, 10);
-    let userUsage = JSON.parse(localStorage.getItem('user_daily_usage')) || { date: todayStr, profilesSeen: 0, chatsOpened: 0 };
-
-    if (userUsage.date !== todayStr) {
-      userUsage = { date: todayStr, profilesSeen: 0, chatsOpened: 0 };
-      localStorage.setItem('user_daily_usage', JSON.stringify(userUsage));
     }
 
     const translations = {
@@ -751,22 +577,6 @@
         looking: { male: "ወንድ", female: "ሴት", both: "ሁለቱንም" },
         religions: { orthodox: "ኦርቶዶክስ", protestant: "ፕሮቴስታንት", muslim: "ሙስሊም", catholic: "ካቶሊክ" },
         ageAny: "ማንኛውም እድሜ",
-
-        // VIP Modal
-        vipMainTitle: "የቪአይፒ ፓኬጅ ይምረጡ",
-        vp1Title: "የ1 ወር ቪአይፒ", vp1Desc: "ለ30 ቀናት ሙሉ አገልግሎት", vp1Price: "199 ብር",
-        vp2Title: "የ3 ወር ቪአይፒ", vp2Desc: "ለ90 ቀናት (ቅናሽ ያለው)", vp2Price: "499 ብር",
-        vp3Title: "የ6 ወር ቪአይፒ", vp3Desc: "ለ180 ቀናት ሙሉ አገልግሎት", vp3Price: "899 ብር",
-        vp4Title: "የ1 ዓመት ቪአይፒ", vp4Desc: "ለ365 ቀናት (ትልቅ ቅናሽ)", vp4Price: "1699 ብር",
-        payTitle: "የአከፋፈል መመሪያ",
-        payPrefix: "እባክዎ የመረጡትን",
-        paySuffix: "ክፍያ በሚከተሉት አካውንቶች ያስገቡ፡",
-        cbeLabel: "ንግድ ባንክ (CBE):",
-        teleLabel: "ቴሌብር (telebirr):",
-        nameLabel: "ስም:",
-        proofDesc: "ክፍያውን ከፈጸሙ በኋላ የስክሪንሾት ፎቶውን እዚህ ያያይዙ፡",
-        selectBtn: "ስክሪንሾት ለመምረጥ እዚህ ይጫኑ",
-        submitBtn: "ማረጋገጫውን ላክ",
 
         // Report modal
         reportSent: "✅ ሪፖርትዎ ተልኳል። እናመሰግናለን!",
@@ -810,22 +620,6 @@
         religions: { orthodox: "Orthodox", protestant: "Protestant", muslim: "Muslim", catholic: "Catholic" },
         ageAny: "Any Age",
 
-        // VIP Modal
-        vipMainTitle: "Select VIP Package",
-        vp1Title: "1 Month VIP", vp1Desc: "Full service for 30 days", vp1Price: "199 Birr",
-        vp2Title: "3 Months VIP", vp2Desc: "90 days (Discounted)", vp2Price: "499 Birr",
-        vp3Title: "6 Months VIP", vp3Desc: "Full service for 180 days", vp3Price: "899 Birr",
-        vp4Title: "1 Year VIP", vp4Desc: "365 days (Big discount)", vp4Price: "1699 Birr",
-        payTitle: "Payment Instructions",
-        payPrefix: "Please transfer payment for",
-        paySuffix: "to the following accounts:",
-        cbeLabel: "Commercial Bank (CBE):",
-        teleLabel: "telebirr:",
-        nameLabel: "Name:",
-        proofDesc: "After payment, upload your receipt screenshot here:",
-        selectBtn: "Tap here to select screenshot",
-        submitBtn: "Submit Receipt",
-
         // Report modal
         reportSent: "✅ Your report was sent. Thank you!",
 
@@ -847,91 +641,6 @@
 
     let currentIndex = 0;
     let myMatches = [];
-
-    function openVIPModal() {
-      document.getElementById('vip-modal').style.display = 'flex';
-    }
-
-    function closeVIPModal() {
-      document.getElementById('vip-modal').style.display = 'none';
-    }
-
-    function selectVIPPackage(pkgEn, pkgAm, element) {
-      selectedVIPPkgEn = pkgEn;
-      selectedVIPPkgAm = pkgAm;
-      document.querySelectorAll('#vip-modal .pkg-card').forEach(el => el.classList.remove('selected'));
-      element.classList.add('selected');
-      document.getElementById('selected-pkg-label').innerText = currentLang === 'am' ? pkgAm : pkgEn;
-    }
-
-    function handleVIPReceipt(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          vipReceiptBase64 = evt.target.result;
-          const preview = document.getElementById('vip-ss-preview');
-          preview.src = evt.target.result;
-          preview.style.display = 'block';
-          document.getElementById('txt-select-btn').innerText = "✅ " + file.name;
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-
-    async function submitVIPReceipt() {
-      const fileInput = document.getElementById('vip-ss-file');
-      if (!fileInput.files || fileInput.files.length === 0 || !vipReceiptBase64) {
-        tg.showAlert(currentLang === 'am' ? "እባክዎን መጀመሪያ የደረሰኙን ስክሪንሾት ያያይዙ!" : "Please upload the screenshot receipt first!");
-        return;
-      }
-
-      const userId = tg.initDataUnsafe?.user?.id;
-      if (!userId) {
-        tg.showAlert(currentLang === 'am' ? 'ይህን ገጽ በቴሌግራም ውስጥ ብቻ ይክፈቱ።' : 'Please open this inside Telegram to submit your receipt.');
-        return;
-      }
-
-      const submitBtn = document.querySelector('#vip-modal .submit-btn');
-      const originalLabel = submitBtn ? submitBtn.innerText : '';
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerText = currentLang === 'am' ? 'በመላክ ላይ...' : 'Sending...';
-      }
-
-      let sentOk = false;
-      try {
-        const res = await fetch(`${BACKEND_URL}/submit_vip_receipt`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: userId,
-            package: selectedVIPPkgEn,
-            photo_base64: vipReceiptBase64
-          })
-        });
-        const result = await res.json().catch(() => ({}));
-        sentOk = res.ok && result.ok;
-      } catch (err) {
-        console.error('VIP receipt submit failed:', err);
-        sentOk = false;
-      }
-
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerText = originalLabel;
-      }
-
-      if (!sentOk) {
-        tg.showAlert(currentLang === 'am' ? "❌ ደረሰኙን መላክ አልተቻለም። እባክዎን እንደገና ይሞክሩ ወይም ኢንተርኔትዎን ያረጋግጡ።" : "❌ Could not send the receipt. Please try again or check your connection.");
-        return; // do NOT close the modal - let them retry
-      }
-
-      tg.showAlert(currentLang === 'am' ? "✅ ደረሰኙ በትክክል ተልኳል! በአጭር ጊዜ ውስጥ ተመርምሮ ቪአይፒው ይበራልዎታል።" : "✅ Receipt submitted! Your VIP will be activated shortly.");
-      vipReceiptBase64 = "";
-      fileInput.value = "";
-      closeVIPModal();
-    }
 
     // 🚨 Report User: a lightweight confirm() dialog, then a fire-and-forget
     // tg.sendData() ping to the bot (handled by handle_web_app_data's
@@ -957,49 +666,6 @@
         tg.showAlert(t.reportSent);
       } else {
         alert(t.reportSent);
-      }
-    }
-
-    function checkVIPStatus() {
-      const savedProfile = JSON.parse(localStorage.getItem('user_profile'));
-      
-      if (localStorage.getItem('user_is_vip') === 'true') {
-        return { isVIP: true, label: currentLang === 'am' ? "👑 VIP አባል" : "👑 VIP Member" };
-      }
-
-      if (savedProfile && savedProfile.registeredAt) {
-        const regDate = new Date(savedProfile.registeredAt);
-        const currentDate = new Date();
-        const diffDays = Math.floor((currentDate - regDate) / (1000 * 60 * 60 * 24));
-
-        if (diffDays < VIP_TRIAL_DAYS) {
-          const remaining = VIP_TRIAL_DAYS - diffDays;
-          return { 
-            isVIP: true, 
-            label: currentLang === 'am' ? `👑 VIP (${remaining} ቀን ይቀራል)` : `👑 VIP (${remaining} days left)` 
-          };
-        }
-      }
-
-      return { isVIP: false, label: "" };
-    }
-
-    function updateLimitCountersUI() {
-      const viewTag = document.getElementById('view-counter-tag');
-      const chatTag = document.getElementById('chat-counter-tag');
-      const vipBadge = document.getElementById('user-status-tag');
-      
-      const vipStatus = checkVIPStatus();
-
-      if (vipStatus.isVIP) {
-        vipBadge.style.display = 'inline-block';
-        vipBadge.innerText = vipStatus.label;
-        viewTag.innerText = currentLang === 'am' ? `👑 VIP አባል፡ ያለገደብ ፕሮፋይል ማየት ይችላሉ` : `👑 VIP Access: Unlimited Profile Views`;
-        chatTag.innerText = currentLang === 'am' ? `👑 VIP አባል፡ ያለገደብ ቻት ማድረግ ይችላሉ` : `👑 VIP Access: Unlimited Chats`;
-      } else {
-        vipBadge.style.display = 'none';
-        viewTag.innerText = currentLang === 'am' ? `የዛሬ ያዩት፡ ${userUsage.profilesSeen}/${FREE_DAILY_PROFILE_LIMIT} ፕሮፋይል` : `Today's Seen: ${userUsage.profilesSeen}/${FREE_DAILY_PROFILE_LIMIT}`;
-        chatTag.innerText = currentLang === 'am' ? `የዛሬ ቻት፡ ${userUsage.chatsOpened}/${FREE_DAILY_CHAT_LIMIT}` : `Today's Chats: ${userUsage.chatsOpened}/${FREE_DAILY_CHAT_LIMIT}`;
       }
     }
 
@@ -1154,44 +820,12 @@
       document.getElementById('opt-rel-muslim').innerText = t.religions.muslim;
       document.getElementById('opt-rel-catholic').innerText = t.religions.catholic;
 
-      // VIP Modal Translation
-      document.getElementById('txt-vip-main-title').innerText = t.vipMainTitle;
-      document.getElementById('v-p1-title').innerText = t.vp1Title;
-      document.getElementById('v-p1-desc').innerText = t.vp1Desc;
-      document.getElementById('v-p1-price').innerText = t.vp1Price;
-
-      document.getElementById('v-p2-title').innerText = t.vp2Title;
-      document.getElementById('v-p2-desc').innerText = t.vp2Desc;
-      document.getElementById('v-p2-price').innerText = t.vp2Price;
-
-      document.getElementById('v-p3-title').innerText = t.vp3Title;
-      document.getElementById('v-p3-desc').innerText = t.vp3Desc;
-      document.getElementById('v-p3-price').innerText = t.vp3Price;
-
-      document.getElementById('v-p4-title').innerText = t.vp4Title;
-      document.getElementById('v-p4-desc').innerText = t.vp4Desc;
-      document.getElementById('v-p4-price').innerText = t.vp4Price;
-
-      document.getElementById('txt-pay-title').innerText = t.payTitle;
-      document.getElementById('txt-pay-prefix').innerText = t.payPrefix;
-      document.getElementById('txt-pay-suffix').innerText = t.paySuffix;
-      document.getElementById('txt-cbe-label').innerText = t.cbeLabel;
-      document.getElementById('txt-tele-label').innerText = t.teleLabel;
-      document.getElementById('txt-name-label').innerText = t.nameLabel;
-      document.getElementById('txt-proof-desc').innerText = t.proofDesc;
-      document.getElementById('txt-select-btn').innerText = t.selectBtn;
-      document.getElementById('txt-submit-btn').innerText = t.submitBtn;
-
-      document.getElementById('selected-pkg-label').innerText = currentLang === 'am' ? selectedVIPPkgAm : selectedVIPPkgEn;
-
       // Profile display card
       document.getElementById('pd-lbl-location').innerText = t.pdLocationLbl;
       document.getElementById('pd-lbl-phone').innerText = t.pdPhoneLbl;
       document.getElementById('pd-lbl-bio').innerText = t.pdBioLbl;
       document.getElementById('btn-edit-profile').innerText = t.btnEditProfile;
       if (localStorage.getItem('user_profile') !== null) renderProfileDisplay();
-
-      updateLimitCountersUI();
     }
 
     function toggleLanguage() {
@@ -1207,23 +841,9 @@
       document.getElementById('card-name').innerText = p.name;
       document.getElementById('card-religion-zodiac').innerText = `☦️ ${p.religion} | ${p.zodiac || ''}`;
       document.getElementById('card-bio').innerText = p.bio;
-      updateLimitCountersUI();
     }
 
     function nextProfile(action) {
-      const vipStatus = checkVIPStatus();
-
-      if (!vipStatus.isVIP && userUsage.profilesSeen >= FREE_DAILY_PROFILE_LIMIT) {
-        tg.showAlert(currentLang === 'am' ? "⚠️ የ 3 ቀን ነፃ VIP ጊዜዎ አልቋል! የዛሬውን የ 25 ፕሮፋይል ገደብ ጨርሰዋል።\n\nያለገደብ ለመጠቀም VIP ይግዙ። 👑" : "⚠️ Free trial expired! Daily 25 profile limit reached.\n\nBuy VIP for unlimited access. 👑");
-        openVIPModal();
-        return;
-      }
-
-      if (!vipStatus.isVIP) {
-        userUsage.profilesSeen++;
-        localStorage.setItem('user_daily_usage', JSON.stringify(userUsage));
-      }
-
       if (action === 'like') {
         tg.HapticFeedback?.impactOccurred('medium');
         const likedProfile = profiles[currentIndex];
@@ -1263,20 +883,6 @@
     }
 
     function openChat(username) {
-      const vipStatus = checkVIPStatus();
-
-      if (!vipStatus.isVIP && userUsage.chatsOpened >= FREE_DAILY_CHAT_LIMIT) {
-        tg.showAlert(currentLang === 'am' ? "⚠️ የ 3 ቀን ነፃ VIP ጊዜዎ አልቋል! የዛሬውን የ 10 ቻት ገደብ ጨርሰዋል።\n\nያለገደብ ቻት ለማድረግ VIP ይግዙ። 👑" : "⚠️ Free trial expired! Daily 10 chats limit reached.\n\nBuy VIP to chat unlimited. 👑");
-        openVIPModal();
-        return;
-      }
-
-      if (!vipStatus.isVIP) {
-        userUsage.chatsOpened++;
-        localStorage.setItem('user_daily_usage', JSON.stringify(userUsage));
-        updateLimitCountersUI();
-      }
-
       if (username) tg.openTelegramLink(`https://t.me/${username}`);
     }
 
@@ -1328,9 +934,6 @@
       document.getElementById('pd-location').innerText = p.location || '-';
       document.getElementById('pd-phone').innerText = p.phone || '-';
       document.getElementById('pd-bio').innerText = p.bio || '-';
-
-      const vipStatus = checkVIPStatus();
-      document.getElementById('pd-vip-ribbon').style.display = vipStatus.isVIP ? 'inline-block' : 'none';
     }
 
 async function saveMyProfile() {
@@ -1507,9 +1110,6 @@ async function saveMyProfile() {
           const result = await res.json();
           if (result.ok && result.exists) {
             fillProfileForm(result.profile);
-            // Real, admin-approved VIP status from the server takes
-            // priority over anything computed locally.
-            localStorage.setItem('user_is_vip', result.profile.is_vip ? 'true' : 'false');
             // Cache the server profile locally too (even on a device that
             // never saved it before) so `isSaved` checks and the display
             // card work correctly right away. Note: the server doesn't
@@ -1553,3 +1153,4 @@ async function saveMyProfile() {
   </script>
 </body>
 </html>
+  
