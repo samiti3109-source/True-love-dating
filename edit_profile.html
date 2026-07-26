@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+{% set u = logged_in_user %}
+<div class="screen">
+  <h1 class="page-title">{{ t('edit_profile') }}</h1>
+  <form method="POST">
+    <div class="field">
+      <label>{{ t('name') }}</label>
+      <input type="text" name="name" value="{{ u.name }}" required>
+    </div>
+
+    <div class="field">
+      <label>{{ t('bio') }}</label>
+      <textarea name="bio" maxlength="120">{{ u.bio }}</textarea>
+      <div class="hint">{{ t('bio_hint') }}</div>
+    </div>
+
+    <div class="field">
+      <label>{{ t('age') }}</label>
+      <input type="number" name="age" min="18" max="99" value="{{ u.age }}">
+    </div>
+
+    <div class="field">
+      <label>{{ t('location') }}</label>
+      <input type="text" name="location" value="{{ u.location }}">
+    </div>
+    <button type="button" class="btn-ghost" style="width:100%; margin-bottom:16px;" onclick="alert('GPS demo — wire up navigator.geolocation here')">📍 {{ t('gps_btn') }}</button>
+
+    <div class="field">
+      <label>{{ t('gender') }}</label>
+      <div class="gender-row">
+        <label class="{{ 'selected' if u.gender=='male' else '' }}"><input type="radio" name="gender" value="male" {{ 'checked' if u.gender=='male' else '' }}> {{ t('male') }}</label>
+        <label class="{{ 'selected' if u.gender=='female' else '' }}"><input type="radio" name="gender" value="female" {{ 'checked' if u.gender=='female' else '' }}> {{ t('female') }}</label>
+      </div>
+    </div>
+
+    <div class="section-label">📍 {{ t('contact_location') }}</div>
+    <div class="field">
+      <label>{{ t('phone') }}</label>
+      <input type="text" name="phone" value="{{ u.phone }}">
+    </div>
+    <button type="button" class="btn-ghost" style="width:100%; margin-bottom:16px;">📱 {{ t('telegram_btn') }}</button>
+
+    <div class="section-label">🎯 {{ t('preferences') }}</div>
+    <div class="field">
+      <label>{{ t('looking_for') }}</label>
+      <select name="looking_for">
+        <option value="male" {{ 'selected' if u.looking_for=='male' else '' }}>{{ t('male') }}</option>
+        <option value="female" {{ 'selected' if u.looking_for=='female' else '' }}>{{ t('female') }}</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>{{ t('age_range_pref') }}</label>
+      <div style="display:flex; gap:10px;">
+        <input type="number" name="age_min" min="18" max="99" value="{{ u.age_min }}" placeholder="{{ t('min_age') }}">
+        <input type="number" name="age_max" min="18" max="99" value="{{ u.age_max }}" placeholder="{{ t('max_age') }}">
+      </div>
+    </div>
+
+    <button class="btn-primary" style="width:100%; margin-top:8px;" type="submit">{{ t('save_profile') }}</button>
+  </form>
+</div>
+{% endblock %}
