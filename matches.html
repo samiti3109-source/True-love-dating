@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="screen">
+  <h1 class="page-title">{{ t('matches_title') }}</h1>
+
+  {% if rows %}
+    {% for row in rows %}
+    <a class="match-list-item" href="{{ url_for('chat', match_id=row.match.id) }}">
+      <div class="avatar-sm" style="background:{{ row.other.avatar_color }};">{{ row.other.name[0]|upper }}</div>
+      <div class="meta">
+        <div class="top">
+          <span class="nm">{{ row.other.name }}</span>
+        </div>
+        <div class="preview">{{ row.last.text if row.last else t('start_conversation') }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  {% else %}
+  <div class="empty-state" style="height:300px;">
+    <div class="big">💬</div>
+    <div>{{ t('no_matches') }}</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
