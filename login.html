@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login — True Love</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body style="align-items:center;">
+<div style="width:100%; max-width:380px; padding:30px;">
+  <div class="brand" style="justify-content:center; margin-bottom:24px; font-size:24px;"><span class="dot"></span> True Love Admin</div>
+  {% if error %}<div class="flash">{{ error }}</div>{% endif %}
+  <form method="POST" style="background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:24px;">
+    <div class="field">
+      <label>Username</label>
+      <input type="text" name="username" required autofocus>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" name="password" required>
+    </div>
+    <button class="btn-primary" style="width:100%;" type="submit">Log In</button>
+  </form>
+</div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{% extends "admin/base.html" %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<h1 class="page-title">User Management</h1>
+<form method="GET" style="margin-bottom:10px;">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search by name or username..." style="padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:var(--surface-alt); color:var(--text); width:280px;">
+  <button class="btn-sm" type="submit">Search</button>
+</form>
+<table>
+  <thead><tr><th>ID</th><th>Name</th><th>Telegram</th><th>Age</th><th>Gender</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for u in users %}
+    <tr>
+      <td>{{ u['id'] }}</td>
+      <td>{{ u['name'] or '—' }}</td>
+      <td>@{{ u['telegram_username'] or u['telegram_id'] }}</td>
+      <td>{{ u['age'] or '—' }}</td>
+      <td>{{ u['gender'] or '—' }}</td>
+      <td>{% if u['is_banned'] %}<span class="tag banned">Banned</span>{% else %}<span class="tag active">Active</span>{% endif %}</td>
+      <td>
+        {% if u['is_banned'] %}
+        <form method="POST" action="{{ url_for('admin_unban_user', user_id=u['id']) }}" style="display:inline;">
+          <button class="btn-sm" type="submit">Unban</button>
+        </form>
+        {% else %}
+        <form method="POST" action="{{ url_for('admin_ban_user', user_id=u['id']) }}" style="display:inline;">
+          <button class="btn-sm" type="submit">Ban</button>
+        </form>
+        {% endif %}
+        <form method="POST" action="{{ url_for('admin_delete_user', user_id=u['id']) }}" style="display:inline;" onsubmit="return confirm('Permanently delete this user and all their data?');">
+          <button class="btn-sm danger" type="submit">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="screen">
+  <h1 class="page-title">Discover</h1>
+  <div class="stack" id="stack">
+    <div class="loading-state" id="loadingState">Loading profiles…</div>
+  </div>
+  <div class="swipe-actions" id="swipeActions" style="display:none;">
+    <button class="pass" onclick="handleSwipe('pass')">✕</button>
+    <button class="report-btn" onclick="openReport()">🚩</button>
+    <button class="like" onclick="handleSwipe('like')">♥</button>
+  </div>
+</div>
+
+<!-- Match modal -->
+<div class="match-overlay" id="matchOverlay">
+  <div class="match-card">
+    <h2>It's a match!</h2>
+    <div class="match-avatars">
+      <div class="av" style="background:linear-gradient(135deg,var(--gold),var(--coral));">{{ logged_in_user['name'][0]|upper if logged_in_user['name'] else '?' }}</div>
+      <div class="av" id="matchAvatar"></div>
+    </div>
+    <p id="matchSub"></p>
+    <div class="btnrow">
+      <button class="btn-primary" id="matchChatBtn">Send a message</button>
+      <button class="btn-ghost" onclick="closeMatch()">Keep swiping</button>
+    </div>
+  </div>
+</div>
+
+<!-- Report modal -->
+<div class="report-overlay" id="reportOverlay">
+  <div class="report-card">
+    <h3>Report this profile</h3>
+    <div class="report-reasons">
+      {% for reason in report_reasons %}
+      <label class="report-reason">
+        <input type="radio" name="reportReason" value="{{ reason }}"> {{ reason }}
+      </label>
+      {% endfor %}
+    </div>
+    <textarea id="reportDetails" placeholder="Additional details (optional)"></textarea>
+    <div class="btnrow">
+      <button class="btn-primary" onclick="submitReport()">Submit Report</button>
+      <button class="btn-ghost" onclick="closeReport()">Cancel</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let currentProfile = null;
+
+function renderEmpty(){
+  document.getElementById('stack').innerHTML = `
+    <div class="empty-state">
+      <div class="big">✨</div>
+      <div style="font-family:'Sora',sans-serif; font-weight:700; font-size:18px;">You're all caught up</div>
+      <div style="font-size:13px;">Check back later for new people nearby.</div>
+    </div>`;
+  document.getElementById('swipeActions').style.display = 'none';
+}
+
+function renderCard(p){
+  currentProfile = p;
+  const photo = p.photos[0] || null;
+  const stack = document.getElementById('stack');
+  stack.innerHTML = `
+    <div class="card" id="activeCard">
+      <div class="badge-overlay like-badge" id="likeBadge">LIKE</div>
+      <div class="badge-overlay nope-badge" id="nopeBadge">NOPE</div>
+      ${photo ? `<img class="photo-img" src="${photo}">` : `<div class="photo" style="background:linear-gradient(135deg,#3aa0ff,#1d6fd1);">${p.name[0].toUpperCase()}</div>`}
+      <div class="info">
+        <div class="name-row"><span class="name">${p.name}</span><span class="age">${p.age}</span></div>
+        <div class="loc">📍 ${p.location || '—'}${p.zodiac ? ' · '+p.zodiac : ''}</div>
+        <div class="bio">${p.bio || ''}</div>
+        ${p.interests.length ? `<div class="chip-row" style="margin-top:8px;">${p.interests.map(i=>`<div class="chip selected" style="cursor:default; font-size:11px; padding:5px 10px;">${i}</div>`).join('')}</div>` : ''}
+      </div>
+    </div>`;
+  document.getElementById('swipeActions').style.display = 'flex';
+  attachDrag(document.getElementById('activeCard'));
+}
+
+async function loadNext(){
+  document.getElementById('stack').innerHTML = '<div class="loading-state">Loading profiles…</div>';
+  const res = await fetch('/api/discover/next');
+  const data = await res.json();
+  if(data.status === 'empty'){ renderEmpty(); return; }
+  renderCard(data.profile);
+}
+
+function attachDrag(card){
+  let startX=0, startY=0, dx=0, dy=0, dragging=false;
+
+  function onDown(x,y){ dragging=true; startX=x; startY=y; card.style.transition='none'; }
+  function onMove(x,y){
+    if(!dragging) return;
+    dx = x-startX; dy = y-startY;
+    const rot = dx/12;
+    card.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+    document.getElementById('likeBadge').style.opacity = Math.max(0, dx/80);
+    document.getElementById('nopeBadge').style.opacity = Math.max(0, -dx/80);
+  }
+  function onUp(){
+    if(!dragging) return;
+    dragging = false;
+    card.style.transition = 'transform .3s ease';
+    if(dx > 100){ handleSwipe('like'); }
+    else if(dx < -100){ handleSwipe('pass'); }
+    else { card.style.transform = 'translate(0,0) rotate(0)'; document.getElementById('likeBadge').style.opacity=0; document.getElementById('nopeBadge').style.opacity=0; }
+  }
+
+  card.addEventListener('mousedown', e => onDown(e.clientX, e.clientY));
+  window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+  window.addEventListener('mouseup', onUp);
+  card.addEventListener('touchstart', e => { const t=e.touches[0]; onDown(t.clientX, t.clientY); }, {passive:true});
+  card.addEventListener('touchmove', e => { const t=e.touches[0]; onMove(t.clientX, t.clientY); }, {passive:true});
+  card.addEventListener('touchend', onUp);
+}
+
+async function handleSwipe(action){
+  if(!currentProfile) return;
+  const targetId = currentProfile.id;
+  const card = document.getElementById('activeCard');
+  if(card){
+    card.style.transition = 'transform .4s ease, opacity .4s ease';
+    card.style.transform = action==='like' ? 'translateX(160%) rotate(20deg)' : 'translateX(-160%) rotate(-20deg)';
+    card.style.opacity = '0';
+  }
+  currentProfile = null;
+
+  const res = await fetch('/api/swipe', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({target_id: targetId, action})
+  });
+  const data = await res.json();
+
+  setTimeout(() => {
+    if(data.matched){ showMatch(data.other, data.match_id); }
+    else { loadNext(); }
+  }, 320);
+}
+
+function showMatch(other, matchId){
+  document.getElementById('matchAvatar').style.background = other.photo ? `url(${other.photo}) center/cover` : 'linear-gradient(135deg,var(--blue),var(--blue-deep))';
+  document.getElementById('matchAvatar').textContent = other.photo ? '' : other.name[0].toUpperCase();
+  document.getElementById('matchSub').textContent = `You and ${other.name} liked each other.`;
+  document.getElementById('matchChatBtn').onclick = () => { window.location.href = `/chat/${matchId}`; };
+  document.getElementById('matchOverlay').classList.add('show');
+}
+function closeMatch(){
+  document.getElementById('matchOverlay').classList.remove('show');
+  loadNext();
+}
+
+function openReport(){
+  if(!currentProfile) return;
+  document.getElementById('reportOverlay').classList.add('show');
+}
+function closeReport(){
+  document.getElementById('reportOverlay').classList.remove('show');
+  document.getElementById('reportDetails').value = '';
+  document.querySelectorAll('input[name="reportReason"]').forEach(r => r.checked = false);
+}
+async function submitReport(){
+  const reasonEl = document.querySelector('input[name="reportReason"]:checked');
+  if(!reasonEl){ alert('Please select a reason.'); return; }
+  await fetch('/api/report', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({reported_id: currentProfile.id, reason: reasonEl.value, details: document.getElementById('reportDetails').value})
+  });
+  closeReport();
+  alert('Thanks — we\\'ll review this profile.');
+}
+
+loadNext();
+</script>
+{% endblock %}

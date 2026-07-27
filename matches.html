@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="screen">
+  <h1 class="page-title">Matches</h1>
+  <div id="matchList"><div class="loading-state">Loading…</div></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function loadMatches(){
+  const res = await fetch('/api/matches');
+  const data = await res.json();
+  const box = document.getElementById('matchList');
+  if(!data.matches.length){
+    box.innerHTML = `<div class="empty-state" style="height:300px;"><div class="big">💬</div><div>No matches yet</div></div>`;
+    return;
+  }
+  box.innerHTML = data.matches.map(m => `
+    <a class="match-list-item" href="/chat/${m.match_id}">
+      ${m.photo ? `<img class="avatar-sm" src="${m.photo}">` : `<div class="avatar-sm" style="background:linear-gradient(135deg,#3aa0ff,#1d6fd1);">${m.name[0].toUpperCase()}</div>`}
+      <div class="meta">
+        <div class="top"><span class="nm">${m.name}</span></div>
+        <div class="preview">${m.last_message ? m.last_message : 'Start the conversation'}</div>
+      </div>
+      ${m.unread > 0 ? '<div class="unread-dot"></div>' : ''}
+    </a>
+  `).join('');
+}
+loadMatches();
+</script>
+{% endblock %}

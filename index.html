@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block main_class %}splash{% endblock %}
+{% block content %}
+<div class="splash-screen">
+  <div class="splash-logo"><span class="dot big"></span></div>
+  <h1 class="splash-title">True Love</h1>
+  <p class="splash-sub" id="splashStatus">Connecting to Telegram…</p>
+
+  {% if dev_mode %}
+  <div class="dev-login">
+    <div class="hint" style="margin-bottom:10px;">Dev mode (no TELEGRAM_BOT_TOKEN set) — log in as a test user:</div>
+    <input id="devId" type="text" placeholder="Telegram ID (e.g. 1001)" value="1001">
+    <input id="devName" type="text" placeholder="Display name (e.g. Arif)" value="Arif">
+    <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="devLogin()">Continue (Dev Login)</button>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function completeAuth(payload){
+  const res = await fetch('/api/auth', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  if(data.status === 'ok'){
+    document.getElementById('splashStatus').textContent = 'Welcome!';
+    window.location.href = data.redirect;
+  } else {
+    document.getElementById('splashStatus').textContent = data.message || 'Could not sign in.';
+  }
+}
+
+function devLogin(){
+  const id = document.getElementById('devId').value.trim();
+  const name = document.getElementById('devName').value.trim();
+  completeAuth({dev_telegram_id: id, dev_name: name});
+}
+
+(function(){
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if(tg){
+    tg.ready();
+    tg.expand();
+    if(tg.initData){
+      completeAuth({initData: tg.initData});
+      return;
+    }
+  }
+  document.getElementById('splashStatus').textContent =
+    {{ 'true' if dev_mode else 'false' }} ? 'Open via Telegram, or use dev login below.' : 'Please open this app from Telegram.';
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="screen">
+  <h1 class="page-title">{{ 'Edit Profile' if edit_mode else "Let's set up your profile" }}</h1>
+
+  <div id="formMsg" class="form-msg" style="display:none;"></div>
+
+  <form id="profileForm">
+    <div class="field">
+      <label>Photos</label>
+      <div class="photo-grid" id="photoGrid">
+        {% if photos %}
+          {% for p in photos %}
+          <div class="photo-slot filled" data-photo-id="{{ p['id'] }}">
+            <img src="{{ url_for('uploaded_file', filename=p['filename']) }}">
+            <button type="button" class="photo-remove" onclick="removePhoto({{ p['id'] }}, this)">✕</button>
+          </div>
+          {% endfor %}
+        {% endif %}
+        <label class="photo-slot add-slot" id="addSlot">
+          <input type="file" id="photoInput" name="photos" accept="image/*" multiple hidden>
+          <span>+</span>
+        </label>
+      </div>
+      <div class="hint">Add up to 6 photos. First photo is your main photo.</div>
+    </div>
+
+    <div class="field">
+      <label>Name</label>
+      <input type="text" name="name" id="f_name" required>
+    </div>
+
+    <div class="field">
+      <label>About Me</label>
+      <textarea name="bio" id="f_bio" maxlength="250"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Age</label>
+      <input type="number" name="age" id="f_age" min="18" max="99">
+    </div>
+
+    <div class="field">
+      <label>Gender</label>
+      <div class="gender-row">
+        <label id="gm"><input type="radio" name="gender" value="male" onchange="selectRadio('gm','gender')"> Male</label>
+        <label id="gf"><input type="radio" name="gender" value="female" onchange="selectRadio('gf','gender')"> Female</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Looking For</label>
+      <div class="gender-row">
+        <label id="lm"><input type="radio" name="looking_for" value="male" onchange="selectRadio('lm','looking_for')"> Men</label>
+        <label id="lf"><input type="radio" name="looking_for" value="female" onchange="selectRadio('lf','looking_for')"> Women</label>
+        <label id="le"><input type="radio" name="looking_for" value="everyone" onchange="selectRadio('le','looking_for')"> Everyone</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Location</label>
+      <input type="text" name="location" id="f_location" placeholder="e.g. Addis Ababa">
+    </div>
+
+    <div class="field">
+      <label>Zodiac Sign</label>
+      <select name="zodiac" id="f_zodiac">
+        <option value="">Prefer not to say</option>
+        {% for z in zodiac_signs %}
+        <option value="{{ z }}">{{ z }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Interests</label>
+      <div class="chip-row" id="interestChips">
+        {% for i in interest_options %}
+        <div class="chip" data-value="{{ i }}" onclick="toggleChip(this)">{{ i }}</div>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="interests" id="f_interests">
+    </div>
+
+    <button class="btn-primary" type="submit" style="width:100%; margin-top:8px;">Save Profile</button>
+  </form>
+</div>
+
+<div class="toast" id="successToast">✅ Profile saved!</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let selectedInterests = new Set();
+let newFiles = [];
+
+function toggleChip(el){
+  const val = el.dataset.value;
+  if(selectedInterests.has(val)){ selectedInterests.delete(val); el.classList.remove('selected'); }
+  else { selectedInterests.add(val); el.classList.add('selected'); }
+  document.getElementById('f_interests').value = Array.from(selectedInterests).join(',');
+}
+
+function selectRadio(id, group){
+  document.querySelectorAll(`.gender-row label`).forEach(l=>{
+    if(l.querySelector(`input[name="${group}"]`)) l.classList.remove('selected');
+  });
+  document.getElementById(id).classList.add('selected');
+}
+
+document.getElementById('addSlot').addEventListener('click', (e) => {
+  document.getElementById('photoInput').click();
+});
+document.getElementById('photoInput').addEventListener('change', (e) => {
+  const grid = document.getElementById('photoGrid');
+  const addSlot = document.getElementById('addSlot');
+  for(const file of e.target.files){
+    newFiles.push(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const div = document.createElement('div');
+      div.className = 'photo-slot filled pending';
+      div.innerHTML = `<img src="${ev.target.result}"><span class="pending-badge">new</span>`;
+      grid.insertBefore(div, addSlot);
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+async function removePhoto(photoId, btn){
+  const res = await fetch(`/api/profile/photo/${photoId}`, {method:'DELETE'});
+  const data = await res.json();
+  if(data.status === 'ok'){
+    btn.closest('.photo-slot').remove();
+  }
+}
+
+document.getElementById('profileForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form);
+  fd.delete('photos');
+  for(const f of newFiles){ fd.append('photos', f); }
+
+  const msgBox = document.getElementById('formMsg');
+  msgBox.style.display = 'none';
+
+  const res = await fetch('/api/profile', { method:'POST', body: fd });
+  const data = await res.json();
+
+  if(data.status === 'ok'){
+    const toast = document.getElementById('successToast');
+    toast.classList.add('show');
+    setTimeout(() => { window.location.href = data.redirect; }, 1100);
+  } else {
+    msgBox.innerHTML = (data.errors || ['Something went wrong.']).join('<br>');
+    msgBox.style.display = 'block';
+  }
+});
+</script>
+{% endblock %}

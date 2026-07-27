@@ -1,0 +1,30 @@
+{% extends "admin/base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<h1 class="page-title">Reports</h1>
+<table>
+  <thead><tr><th>ID</th><th>Reporter</th><th>Reported User</th><th>Reason</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for r in reports %}
+    <tr>
+      <td>{{ r['id'] }}</td>
+      <td>{{ r['reporter_name'] }}</td>
+      <td>{{ r['reported_name'] }}</td>
+      <td>{{ r['reason'] }}</td>
+      <td style="max-width:220px;">{{ r['details'] or '—' }}</td>
+      <td><span class="tag {{ r['status'] }}">{{ r['status'] }}</span></td>
+      <td>
+        {% if r['status'] == 'pending' %}
+        <form method="POST" action="{{ url_for('admin_resolve_report', report_id=r['id']) }}" style="display:inline;">
+          <button class="btn-sm" type="submit">Mark Resolved</button>
+        </form>
+        <form method="POST" action="{{ url_for('admin_ban_from_report', report_id=r['id']) }}" style="display:inline;" onsubmit="return confirm('Ban this user?');">
+          <button class="btn-sm danger" type="submit">Ban User</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

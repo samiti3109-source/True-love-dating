@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="screen">
+  <h1 class="page-title">Your Profile</h1>
+  <div class="profile-card-view">
+    <div class="cover">
+      {% if photos %}
+      <img class="cover-photo" src="{{ url_for('uploaded_file', filename=photos[0]['filename']) }}">
+      {% endif %}
+      <div class="avatar">{{ logged_in_user['name'][0]|upper if logged_in_user['name'] else '?' }}</div>
+    </div>
+    <div class="body">
+      <h2>{{ logged_in_user['name'] }} <span>, {{ logged_in_user['age'] }}</span></h2>
+      <div class="info-row"><span class="ic">📍</span><div><span class="lbl">Location</span><span class="val">{{ logged_in_user['location'] or '—' }}</span></div></div>
+      <div class="info-row"><span class="ic">✨</span><div><span class="lbl">Zodiac</span><span class="val">{{ logged_in_user['zodiac'] or '—' }}</span></div></div>
+      <div class="info-row"><span class="ic">📝</span><div><span class="lbl">About Me</span><span class="val" style="font-weight:500;">{{ logged_in_user['bio'] or '—' }}</span></div></div>
+      {% if logged_in_user['interests'] %}
+      <div class="chip-row" style="margin-top:14px; justify-content:center;">
+        {% for i in logged_in_user['interests'].split(',') %}
+          {% if i %}<div class="chip selected" style="cursor:default;">{{ i }}</div>{% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <a class="btn-primary" style="width:100%; display:block; text-align:center; text-decoration:none;" href="{{ url_for('profile_edit') }}">✏️ Edit Profile</a>
+  <a class="btn-ghost" style="width:100%; display:block; text-align:center; text-decoration:none; margin-top:10px;" href="{{ url_for('logout') }}">Log Out</a>
+</div>
+{% endblock %}

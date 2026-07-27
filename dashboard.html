@@ -1,0 +1,12 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1 class="page-title">Dashboard</h1>
+<div class="stat-grid">
+  <div class="stat-card"><div class="num">{{ stats.total_users }}</div><div class="lbl">Total Users</div></div>
+  <div class="stat-card"><div class="num">{{ stats.banned_users }}</div><div class="lbl">Banned Users</div></div>
+  <div class="stat-card"><div class="num">{{ stats.total_matches }}</div><div class="lbl">Total Matches</div></div>
+  <div class="stat-card"><div class="num">{{ stats.total_messages }}</div><div class="lbl">Messages Sent</div></div>
+  <div class="stat-card"><div class="num">{{ stats.pending_reports }}</div><div class="lbl">Pending Reports</div></div>
+</div>
+{% endblock %}

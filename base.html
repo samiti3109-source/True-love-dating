@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Admin{% endblock %} — True Love</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+  body{display:block;}
+  .admin-wrap{display:flex; min-height:100vh; max-width:1200px; margin:0 auto;}
+  .admin-sidebar{width:220px; flex-shrink:0; border-right:1px solid var(--line); padding:24px 16px; background:var(--surface);}
+  .admin-sidebar a{display:block; padding:11px 14px; border-radius:12px; color:var(--text-dim); text-decoration:none; font-weight:600; font-size:14px; margin-bottom:4px;}
+  .admin-sidebar a.active, .admin-sidebar a:hover{background:var(--surface-alt); color:var(--text);}
+  .admin-main{flex:1; padding:30px;}
+  .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-top:20px;}
+  .stat-card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:20px;}
+  .stat-card .num{font-family:'Sora'; font-size:30px; font-weight:800; color:var(--blue);}
+  .stat-card .lbl{font-size:12px; color:var(--text-dim); margin-top:4px;}
+  table{width:100%; border-collapse:collapse; margin-top:16px;}
+  th, td{text-align:left; padding:12px; border-bottom:1px solid var(--line); font-size:14px;}
+  th{color:var(--text-dim); font-size:11px; text-transform:uppercase;}
+  .tag{padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700;}
+  .tag.banned{background:rgba(255,107,122,0.15); color:var(--coral);}
+  .tag.active{background:rgba(52,201,155,0.15); color:#34c99b;}
+  .tag.pending{background:rgba(242,181,55,0.15); color:var(--gold);}
+  .tag.resolved{background:rgba(52,201,155,0.15); color:#34c99b;}
+  .btn-sm{padding:6px 12px; font-size:12px; border-radius:8px; border:1px solid var(--line); background:var(--surface-alt); color:var(--text); cursor:pointer;}
+  .btn-sm.danger{color:var(--coral); border-color:rgba(255,107,122,0.4);}
+</style>
+</head>
+<body>
+<div class="admin-wrap">
+  <div class="admin-sidebar">
+    <div class="brand" style="margin-bottom:24px;"><span class="dot"></span> Admin</div>
+    <a href="{{ url_for('admin_dashboard') }}" class="{{ 'active' if request.endpoint=='admin_dashboard' else '' }}">📊 Dashboard</a>
+    <a href="{{ url_for('admin_users') }}" class="{{ 'active' if request.endpoint=='admin_users' else '' }}">👥 Users</a>
+    <a href="{{ url_for('admin_reports') }}" class="{{ 'active' if request.endpoint=='admin_reports' else '' }}">🚩 Reports</a>
+    <a href="{{ url_for('admin_logout') }}" style="margin-top:20px; color:var(--coral);">⏻ Log Out</a>
+  </div>
+  <div class="admin-main">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+</body>
+</html>
